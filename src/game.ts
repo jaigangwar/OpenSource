@@ -46,6 +46,12 @@ export class MainScene extends Phaser.Scene {
             this.snippets = SKILL_DATA[this.skill] || SKILL_DATA["Python"];
         }
 
+        // Fix: Sanitize snippets to remove Windows carriage returns (\r) which cause typing lockups
+        this.snippets = this.snippets.map(s => ({
+            text: s.text.replace(/\r/g, ''),
+            explanation: s.explanation
+        }));
+
         this.currentSnippetIndex = 0;
         this.typedText = "";
         this.isFinished = false;
@@ -190,11 +196,6 @@ export class MainScene extends Phaser.Scene {
             return;
         }
         
-        // ADAPTIVE DIFFICULTY LOGIC
-        // If WPM is high, we don't change text, but we could add more logic here.
-        // For now, it simply progresses. If they are failing, we could theoretically
-        // split snippets.
-        
         this.typedText = "";
         this.renderText();
     }
@@ -205,12 +206,13 @@ export class MainScene extends Phaser.Scene {
         const target = this.snippets[this.currentSnippetIndex].text;
         const key = event.key;
 
-        // Allow proper Backspace handling
+        // Ensure key processing is valid for single chars or Enter
         if (key.length === 1 || key === 'Enter') { 
             const charToMatch = key === 'Enter' ? '\n' : key;
+            const expectedChar = target[this.typedText.length];
 
-            if (charToMatch === target[this.typedText.length]) {
-                this.typedText += charToMatch;
+            if (charToMatch === expectedChar) {
+                this.typedText += expectedChar;
                 this.totalChars++;
                 this.currentStreak++;
                 if (this.currentStreak > this.maxStreak) {
@@ -218,6 +220,16 @@ export class MainScene extends Phaser.Scene {
                     (window as any).maxStreakAchieved = this.maxStreak;
                 }
                 
+                // Fix: Smart Auto-Indent. 
+                // If user hits Enter, automatically append trailing spaces/tabs on the new line
+                if (expectedChar === '\n') {
+                    while (this.typedText.length < target.length && 
+                           (target[this.typedText.length] === ' ' || target[this.typedText.length] === '\t')) {
+                        this.typedText += target[this.typedText.length];
+                        this.totalChars++; 
+                    }
+                }
+
                 this.playASMRClick();
 
                 // Dynamic Camera Pump effect
