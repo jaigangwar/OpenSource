@@ -29,131 +29,32 @@
         content: " ";
         display: block;
         position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
+        inset: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         z-index: 999;
         background-size: 100% 2px, 3px 100%;
         pointer-events: none;
       }
 
-      #bg-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -2;
+      /* Screen Glitch Animation */
+      @keyframes glitch {
+        0% { transform: translate(0) }
+        20% { transform: translate(-2px, 2px) }
+        40% { transform: translate(-2px, -2px) }
+        60% { transform: translate(2px, 2px) }
+        80% { transform: translate(2px, -2px) }
+        100% { transform: translate(0) }
       }
 
-      #bg-overlay {
-        position: fixed;
-        inset: 0;
-        background: radial-gradient(circle at center, transparent 0%, #000 100%);
-        z-index: -1;
-        pointer-events: none;
+      .glitch-active {
+        animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
+        color: var(--neon-magenta);
       }
 
-      #app {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        transform-style: preserve-3d;
-      }
+      #bg-canvas { position: fixed; inset: 0; z-index: -2; }
+      #bg-overlay { position: fixed; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%); z-index: -1; pointer-events: none; }
 
-      .parallax-el {
-        transform-style: preserve-3d;
-        transition: transform 0.1s ease-out;
-      }
-
-      #game-container {
-        border: 2px solid var(--neon-cyan);
-        box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 243, 255, 0.1);
-        border-radius: 12px;
-        overflow: hidden;
-        position: relative;
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(4px);
-        transition: box-shadow 0.3s, border-color 0.3s;
-      }
-
-      .flow-state-active #game-container {
-        border-color: var(--neon-gold) !important;
-        box-shadow: 0 0 50px var(--neon-gold), inset 0 0 30px var(--neon-gold) !important;
-        animation: pulse-gold 1s infinite alternate;
-      }
-
-      @keyframes pulse-gold {
-        0% { box-shadow: 0 0 30px var(--neon-gold), inset 0 0 20px var(--neon-gold); }
-        100% { box-shadow: 0 0 70px var(--neon-gold), inset 0 0 40px var(--neon-gold); }
-      }
-
-      #ui-layer {
-        position: absolute;
-        top: 30px;
-        left: 30px;
-        z-index: 10;
-        background: var(--panel-bg);
-        padding: 20px;
-        border-left: 4px solid var(--neon-magenta);
-        border-radius: 4px;
-        pointer-events: none;
-        min-width: 180px;
-        box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
-      }
-
-      #flow-state-indicator {
-        position: absolute;
-        top: 30px;
-        right: 30px;
-        z-index: 10;
-        color: var(--neon-gold);
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 900;
-        text-shadow: 0 0 15px var(--neon-gold);
-        opacity: 0;
-        transition: opacity 0.5s;
-        transform: translateZ(50px);
-      }
-
-      .hud-label {
-        font-size: 0.7rem;
-        color: var(--neon-cyan);
-        text-transform: uppercase;
-        margin-bottom: 5px;
-        letter-spacing: 2px;
-      }
-
-      .hud-val {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.4rem;
-        color: white;
-        margin-bottom: 10px;
-        text-shadow: 0 0 5px rgba(255,255,255,0.5);
-      }
-
-      #focus-meter {
-        width: 100%;
-        height: 8px;
-        background: #222;
-        margin-top: 5px;
-        border-radius: 4px;
-        overflow: hidden;
-      }
-
-      #focus-bar {
-        width: 0%;
-        height: 100%;
-        background: var(--neon-cyan);
-        transition: width 0.3s;
-      }
-
-      #overlay, #skill-selection {
+      .screen-layer {
         position: fixed;
         inset: 0;
         background: rgba(5, 8, 12, 0.85);
@@ -165,195 +66,172 @@
         z-index: 1000;
         text-align: center;
         transform-style: preserve-3d;
+        transition: opacity 0.5s, transform 0.5s;
       }
 
-      h1 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 5rem;
-        color: var(--neon-cyan);
-        text-shadow: 0 0 30px var(--neon-cyan);
-        margin-bottom: 10px;
-        transform: translateZ(80px);
-      }
+      .hidden { opacity: 0; pointer-events: none; transform: scale(1.1) translateZ(100px); display: none !important; }
 
-      .subtitle {
-        color: var(--neon-magenta);
-        margin-bottom: 30px;
-        text-transform: uppercase;
-        letter-spacing: 0.5rem;
-        transform: translateZ(60px);
+      /* Typography */
+      h1, h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); text-shadow: 0 0 30px var(--neon-cyan); transform: translateZ(80px); }
+      h1 { font-size: 5rem; margin-bottom: 10px; }
+      h2 { font-size: 3rem; margin-bottom: 40px; }
+      .subtitle { color: var(--neon-magenta); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 0.5rem; transform: translateZ(60px); }
+      
+      /* Terminal Typing Effect */
+      #terminal-text {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 1.5rem;
+        color: #00f3ff;
+        text-align: left;
+        max-width: 800px;
+        min-height: 150px;
+        transform: translateZ(50px);
+        line-height: 1.6;
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
       }
+      .cursor { display: inline-block; width: 10px; height: 1.2rem; background: var(--neon-cyan); animation: blink 1s step-end infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+
+      /* Buttons & Cards */
+      button {
+        padding: 15px 50px; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;
+        font-family: 'Orbitron', sans-serif; background: rgba(0, 243, 255, 0.1);
+        color: var(--neon-cyan); border: 2px solid var(--neon-cyan);
+        cursor: pointer; text-transform: uppercase; transition: all 0.3s;
+        border-radius: 4px; transform: translateZ(50px); box-shadow: 0 0 15px rgba(0,243,255,0.2);
+      }
+      button:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 40px var(--neon-cyan); transform: translateZ(60px) scale(1.05); }
+
+      .mode-cards { display: flex; gap: 40px; transform: translateZ(60px); }
+      .mode-card {
+        width: 350px; padding: 40px; border: 2px solid #444; border-radius: 12px;
+        background: rgba(10, 15, 25, 0.8); cursor: pointer; transition: 0.3s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform-style: preserve-3d;
+      }
+      .mode-card h3 { font-family: 'Orbitron'; font-size: 1.8rem; margin: 0 0 15px 0; color: white; transition: 0.3s; }
+      .mode-card p { color: #888; font-size: 1.1rem; line-height: 1.5; }
+      .mode-card:hover { border-color: var(--neon-cyan); background: rgba(20, 30, 45, 0.9); transform: translateY(-10px) translateZ(40px) scale(1.05); box-shadow: 0 0 40px rgba(0, 243, 255, 0.3); }
+      .mode-card:hover h3 { color: var(--neon-cyan); text-shadow: 0 0 15px var(--neon-cyan); }
+      #mode-neural:hover { border-color: var(--neon-magenta); box-shadow: 0 0 40px rgba(255, 0, 255, 0.3); }
+      #mode-neural:hover h3 { color: var(--neon-magenta); text-shadow: 0 0 15px var(--neon-magenta); }
 
       .skill-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4 columns for 20 items */
-        gap: 15px;
-        max-width: 1100px;
-        max-height: 55vh;
-        overflow-y: auto;
-        padding: 20px;
-        margin-top: 10px;
-        transform: translateZ(40px);
+        display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
+        max-width: 1200px; max-height: 60vh; overflow-y: auto; padding: 20px;
+        margin-top: 10px; transform: translateZ(40px);
       }
-
-      /* Custom scrollbar for skill grid */
       .skill-grid::-webkit-scrollbar { width: 8px; }
       .skill-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 4px; }
       .skill-grid::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 4px; }
 
       .skill-card {
-        padding: 20px 15px;
-        border: 2px solid #333;
-        background: rgba(20, 25, 35, 0.8);
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        text-transform: uppercase;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        transform-style: preserve-3d;
+        padding: 25px 15px; border: 1px solid #333; background: rgba(20, 25, 35, 0.8);
+        cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        text-transform: uppercase; font-family: 'Orbitron', sans-serif; font-size: 1.1rem;
+        border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); position: relative; overflow: hidden;
       }
-
+      .skill-card::before { content:''; position:absolute; top:0; left:-100%; width:50%; height:100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-20deg); transition: 0.5s; }
+      .skill-card:hover::before { left: 200%; }
       .skill-card:hover {
-        border-color: var(--neon-cyan);
-        box-shadow: 0 15px 30px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.2);
-        transform: translateY(-5px) translateZ(20px) scale(1.05);
-        background: rgba(30, 40, 55, 0.9);
-        color: var(--neon-cyan);
-        text-shadow: 0 0 10px var(--neon-cyan);
+        border-color: var(--neon-cyan); box-shadow: 0 15px 40px rgba(0, 243, 255, 0.5), inset 0 0 20px rgba(0, 243, 255, 0.3);
+        transform: translateY(-10px) translateZ(30px) scale(1.1); background: rgba(30, 40, 55, 0.9);
+        color: white; text-shadow: 0 0 15px var(--neon-cyan);
       }
 
-      #dashboard {
-        position: fixed;
-        inset: 0;
-        background: rgba(10, 15, 20, 0.9);
-        backdrop-filter: blur(15px);
-        z-index: 2000;
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        overflow-y: auto;
-      }
-
-      .chart-container {
-        width: 90%;
-        max-width: 1000px;
-        height: 400px;
-        background: var(--panel-bg);
-        padding: 20px;
-        margin-top: 30px;
-        border: 1px solid var(--neon-cyan);
-        border-radius: 8px;
-        box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
-      }
-
-      #webcam {
-        position: absolute;
-        bottom: 30px;
-        right: 30px;
-        width: 200px;
-        height: 150px;
-        border: 2px solid var(--neon-magenta);
-        box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3);
-        transform: scaleX(-1) translateZ(40px);
-        z-index: 5;
-        border-radius: 8px;
-      }
-
-      .hidden { display: none !important; }
+      /* Game Elements */
+      #app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; transform-style: preserve-3d; opacity: 0; transition: opacity 1s; pointer-events: none; }
+      .game-active #app { opacity: 1; pointer-events: all; }
       
-      button {
-        padding: 15px 50px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        letter-spacing: 2px;
-        font-family: 'Orbitron', sans-serif;
-        background: rgba(0, 243, 255, 0.1);
-        color: var(--neon-cyan);
-        border: 2px solid var(--neon-cyan);
-        cursor: pointer;
-        text-transform: uppercase;
-        transition: all 0.3s;
-        border-radius: 4px;
-        transform: translateZ(50px);
+      #game-container {
+        border: 2px solid var(--neon-cyan); box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 243, 255, 0.1);
+        border-radius: 12px; overflow: hidden; position: relative; background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px); transition: box-shadow 0.3s, border-color 0.3s;
       }
+      .flow-state-active #game-container { border-color: var(--neon-gold) !important; box-shadow: 0 0 50px var(--neon-gold), inset 0 0 30px var(--neon-gold) !important; animation: pulse-gold 1s infinite alternate; }
 
-      button:hover {
-        background: var(--neon-cyan);
-        color: #000;
-        box-shadow: 0 0 30px var(--neon-cyan);
-        transform: translateZ(60px) scale(1.05);
-      }
+      #ui-layer { position: absolute; top: 30px; left: 30px; z-index: 10; background: var(--panel-bg); padding: 20px; border-left: 4px solid var(--neon-cyan); border-radius: 4px; box-shadow: 10px 10px 30px rgba(0,0,0,0.8); }
+      .hud-label { font-size: 0.7rem; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 2px; }
+      .hud-val { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: white; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+      #focus-meter { width: 100%; height: 8px; background: #222; margin-top: 5px; border-radius: 4px; overflow: hidden; }
+      #focus-bar { width: 0%; height: 100%; background: var(--neon-cyan); transition: width 0.3s; }
+      
+      #webcam { position: absolute; bottom: 30px; right: 30px; width: 200px; height: 150px; border: 2px solid var(--neon-magenta); box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3); transform: scaleX(-1) translateZ(40px); z-index: 5; border-radius: 8px; }
 
       #typing-hud {
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          transform-origin: bottom center;
-          display: flex;
-          gap: 50px;
-          background: var(--panel-bg);
-          padding: 20px 40px;
-          border-top: 2px solid var(--neon-cyan);
-          border-radius: 12px 12px 0 0;
-          box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+          position: absolute; bottom: 0; left: 50%; transform-origin: bottom center; display: flex; gap: 50px;
+          background: var(--panel-bg); padding: 20px 40px; border-top: 2px solid var(--neon-cyan);
+          border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
       }
+      .streak-val { color: var(--neon-gold) !important; text-shadow: 0 0 10px var(--neon-gold) !important; }
 
-      .streak-val {
-        color: var(--neon-gold) !important;
-        text-shadow: 0 0 10px var(--neon-gold) !important;
-      }
+      /* Dashboard */
+      #dashboard { position: fixed; inset: 0; background: rgba(10, 15, 20, 0.95); backdrop-filter: blur(20px); z-index: 2000; padding: 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+      .chart-container { width: 90%; max-width: 1000px; height: 400px; background: var(--panel-bg); padding: 20px; margin-top: 30px; border: 1px solid var(--neon-cyan); border-radius: 8px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.1); }
     </style>
   </head>
   <body class="crt">
     <canvas id="bg-canvas"></canvas>
     <div id="bg-overlay"></div>
 
-    <div id="overlay" class="parallax-layer">
-      <h1>NEURO<span style="color:white">-TYPE</span></h1>
-      <div class="subtitle">4D Immersive Skill Accelerator</div>
-      <p style="max-width: 700px; color: #aaa; font-size: 1.2rem; line-height: 1.6; transform: translateZ(40px); margin-bottom: 40px;">
-        Experience **JARVIS-level** learning in a fully realistic 3D spatial environment.<br><br>
-        🔥 <strong>High Focus + Zero Errors</strong> triggers <strong>FLOW STATE</strong>.<br>
-        🔊 Feel every keystroke with immersive ASMR audio feedback.
-      </p>
-      <button id="start-btn" onmouseover="playHoverSound()">Initiate Connection</button>
-      <div id="loading" class="hidden" style="margin-top: 30px; font-size: 1.2rem; color: var(--neon-cyan); transform: translateZ(50px);">Syncing Neural Models & 3D Environment...</div>
+    <!-- 1. Click to Boot -->
+    <div id="boot-screen" class="screen-layer">
+      <button id="boot-btn">INITIALIZE SYSTEM</button>
     </div>
 
-    <div id="skill-selection" class="hidden parallax-layer">
-      <h2 style="font-family: 'Orbitron'; font-size: 3rem; color: white; text-shadow: 0 0 20px var(--neon-cyan); transform: translateZ(60px);">SELECT NEURAL PATHWAY</h2>
-      <div class="skill-grid" id="skills-container">
-        <!-- Skills injected by JS -->
+    <!-- 2. Cinematic Intro -->
+    <div id="intro-screen" class="screen-layer" style="display:none;">
+      <h1 id="glitch-title">NEURO<span style="color:white">-TYPE</span></h1>
+      <div id="terminal-text"></div>
+    </div>
+
+    <!-- 3. Mode Selection -->
+    <div id="mode-selection" class="screen-layer" style="display:none;">
+      <h2>SELECT INTERFACE MODE</h2>
+      <div class="mode-cards">
+        <div class="mode-card" id="mode-neural" onmouseover="playHoverSound()">
+          <h3>NEURAL LINK</h3>
+          <p>Full Immersion. Uses webcam AI to track your eye gaze and head pose. Your real-world focus directly controls the in-game environment (Mental Fog, Flow State).</p>
+          <div style="margin-top:20px; color:var(--neon-magenta); font-weight:bold;">[ WEBCAM REQUIRED ]</div>
+        </div>
+        <div class="mode-card" id="mode-manual" onmouseover="playHoverSound()">
+          <h3>MANUAL OVERRIDE</h3>
+          <p>Standard Arcade Mode. Focus is locked at 100%. Master your typing skills through intense visual feedback and audio cues without camera tracking.</p>
+          <div style="margin-top:20px; color:var(--neon-cyan); font-weight:bold;">[ NO CAMERA NEEDED ]</div>
+        </div>
       </div>
     </div>
 
-    <div id="dashboard" class="hidden">
+    <!-- 4. Skill Selection -->
+    <div id="skill-selection" class="screen-layer" style="display:none;">
+      <h2>SELECT NEURAL PATHWAY</h2>
+      <div class="skill-grid" id="skills-container"></div>
+      <div id="loading" class="hidden" style="margin-top: 30px; font-size: 1.5rem; color: var(--neon-cyan); transform: translateZ(50px); text-shadow: 0 0 20px var(--neon-cyan);">ESTABLISHING UPLINK...</div>
+    </div>
+
+    <!-- Final Dashboard -->
+    <div id="dashboard" class="screen-layer" style="display:none;">
       <h1 style="transform: translateZ(60px);">SESSION <span style="color:var(--neon-magenta)">ANALYSIS</span></h1>
-      <div id="rank-display" style="font-size: 5rem; font-family: 'Orbitron'; font-weight: 900; color: var(--neon-cyan); transform: translateZ(80px);">RANK: S</div>
+      <div id="rank-display" style="font-size: 6rem; font-family: 'Orbitron'; font-weight: 900; color: var(--neon-cyan); transform: translateZ(80px);">RANK: S</div>
       <div id="final-stats" style="margin: 30px 0; display: flex; gap: 50px; font-size: 1.5rem; background: rgba(0,0,0,0.6); padding: 30px; border-radius: 12px; border: 1px solid #444; transform: translateZ(50px); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
           <div>AVG SPEED: <span id="res-wpm" style="color: var(--neon-cyan); font-weight: bold;">--</span> WPM</div>
           <div>ACCURACY: <span id="res-acc" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
-          <div>FOCUS: <span id="res-focus" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
+          <div id="focus-stat-container">FOCUS: <span id="res-focus" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
           <div>MAX STREAK: <span id="res-streak" style="color: var(--neon-gold); font-weight: bold;">--</span></div>
       </div>
       <div class="chart-container" style="transform: translateZ(40px);">
         <canvas id="analytics-chart"></canvas>
       </div>
       <br>
-      <button onclick="location.reload()" onmouseover="playHoverSound()">Re-Initialize Setup</button>
+      <button onclick="location.reload()" onmouseover="playHoverSound()">Reboot System</button>
     </div>
 
+    <!-- Game App -->
     <div id="app">
       <div id="ui-layer" class="parallax-el">
-        <div class="hud-label">Neural Sync</div>
-        <div id="focus-val" class="hud-val">0%</div>
-        <div id="focus-meter"><div id="focus-bar"></div></div>
+        <div class="hud-label" id="sync-label">Neural Sync</div>
+        <div id="focus-val" class="hud-val">100%</div>
+        <div id="focus-meter"><div id="focus-bar" style="width: 100%;"></div></div>
       </div>
-
-      <div id="flow-state-indicator" class="parallax-el">FLOW STATE ACTIVATED</div>
 
       <div id="game-container" class="parallax-el"></div>
       
@@ -376,104 +254,168 @@
           </div>
       </div>
 
-      <video id="webcam" class="parallax-el" autoplay playsinline></video>
+      <video id="webcam" class="parallax-el" autoplay playsinline style="display:none;"></video>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
     
     <script>
+        /* DOM Elements & State */
+        const bootScreen = document.getElementById('boot-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const modeScreen = document.getElementById('mode-selection');
+        const skillScreen = document.getElementById('skill-selection');
+        const termText = document.getElementById('terminal-text');
+        
+        let audioCtx;
+        
+        /* Audio Setup */
+        window.playHoverSound = () => {
+            if(!audioCtx || audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        };
+
+        const playBootSound = () => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(50, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 2);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 1); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 3);
+        };
+
+        window.startAmbientDrone = () => {
+            if(!audioCtx || audioCtx.state === 'suspended') return;
+            const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator(); const lfo = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc1.type = 'sine'; osc2.type = 'triangle'; osc1.frequency.value = 55; osc2.frequency.value = 54.5;
+            lfo.type = 'sine'; lfo.frequency.value = 0.1; 
+            const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0.02; lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+            gain.gain.value = 0.08;
+            osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+            osc1.start(); osc2.start(); lfo.start();
+        };
+
+        const speakWelcome = () => {
+            if ('speechSynthesis' in window) {
+                const msg = new SpeechSynthesisUtterance("System online. Neural pathways established. Please select your interface mode.");
+                msg.rate = 1.0; msg.pitch = 0.8;
+                const voices = window.speechSynthesis.getVoices();
+                const v = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
+                if (v) msg.voice = v;
+                window.speechSynthesis.speak(msg);
+            }
+        };
+
+        /* Flow Logic */
+        document.getElementById('boot-btn').addEventListener('click', () => {
+            // Init Audio Context on first interaction
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            bootScreen.style.display = 'none';
+            introScreen.style.display = 'flex';
+            
+            playBootSound();
+            window.startAmbientDrone();
+            document.getElementById('glitch-title').classList.add('glitch-active');
+
+            // Typewriter effect
+            const lines = [
+                "> INITIALIZING NEURAL ENGINE...",
+                "> CALIBRATING 4D PARALLAX MATRICES...",
+                "> LOADING KNOWLEDGE REPOSITORIES [20/20]...",
+                "> BYPASSING SECURITY PROTOCOLS...",
+                "> SYSTEM ONLINE."
+            ];
+            let currentLine = 0;
+            let currentChar = 0;
+
+            const typeWriter = () => {
+                if(currentLine < lines.length) {
+                    if(currentChar < lines[currentLine].length) {
+                        termText.innerHTML = lines.slice(0, currentLine).join('<br>') + (currentLine > 0 ? '<br>' : '') + lines[currentLine].substring(0, currentChar + 1) + '<span class="cursor"></span>';
+                        currentChar++;
+                        setTimeout(typeWriter, Math.random() * 50 + 20); // typing speed
+                    } else {
+                        currentChar = 0;
+                        currentLine++;
+                        setTimeout(typeWriter, 400); // line delay
+                    }
+                } else {
+                    termText.innerHTML = lines.join('<br>') + '<span class="cursor"></span>';
+                    document.getElementById('glitch-title').classList.remove('glitch-active');
+                    setTimeout(() => {
+                        introScreen.style.display = 'none';
+                        modeScreen.style.display = 'flex';
+                        speakWelcome();
+                    }, 1000);
+                }
+            };
+            typeWriter();
+        });
+
+        // Mode Selection
+        let selectedMode = 'manual';
+        document.getElementById('mode-neural').addEventListener('click', () => {
+            selectedMode = 'neural';
+            modeScreen.style.display = 'none';
+            skillScreen.style.display = 'flex';
+            playHoverSound();
+        });
+        document.getElementById('mode-manual').addEventListener('click', () => {
+            selectedMode = 'manual';
+            modeScreen.style.display = 'none';
+            skillScreen.style.display = 'flex';
+            playHoverSound();
+            
+            // Adjust UI for manual mode
+            document.getElementById('sync-label').innerText = "System Power";
+            document.getElementById('ui-layer').style.borderLeftColor = 'var(--neon-gold)';
+            document.getElementById('focus-bar').style.backgroundColor = 'var(--neon-gold)';
+            document.getElementById('focus-bar').style.boxShadow = '0 0 15px var(--neon-gold)';
+        });
+
+        // Populate Skills
         const subjects = ["Python", "SQL", "Java", "HTML/CSS", "React", "TypeScript", "C++", "Rust", "Go", "Node.js", "Linux Bash", "Docker", "Git", "CyberSecurity", "Machine Learning", "Data Science", "Regex", "Quantum Computing", "Astronomy", "Tech Trivia"];
         const grid = document.getElementById('skills-container');
         subjects.forEach(subject => {
             const card = document.createElement('div');
             card.className = 'skill-card';
             card.innerText = subject;
-            card.onclick = () => window.selectSkill(subject);
+            card.onclick = () => {
+                playHoverSound();
+                document.getElementById('skills-container').style.display = 'none';
+                document.getElementById('skill-selection').querySelector('h2').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                // Trigger main app
+                setTimeout(() => {
+                    document.body.classList.add('game-active');
+                    skillScreen.style.display = 'none';
+                    if(window.startApp) window.startApp(selectedMode === 'neural', subject);
+                }, 500);
+            };
             card.onmouseover = () => window.playHoverSound();
             grid.appendChild(card);
         });
 
-        // Audio Context for UI Hovers and Ambient Sci-Fi Drone
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        window.playHoverSound = () => {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        };
-
-        window.startAmbientDrone = () => {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            const lfo = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc1.type = 'sine';
-            osc2.type = 'triangle';
-            osc1.frequency.value = 55; // Deep bass
-            osc2.frequency.value = 54.5; // Slight detune for phasing
-
-            lfo.type = 'sine';
-            lfo.frequency.value = 0.1; // Very slow LFO
-            const lfoGain = audioCtx.createGain();
-            lfoGain.gain.value = 0.02;
-            lfo.connect(lfoGain);
-            lfoGain.connect(gain.gain);
-
-            gain.gain.value = 0.05; // Very subtle
-
-            osc1.connect(gain);
-            osc2.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc1.start();
-            osc2.start();
-            lfo.start();
-        };
-
-        window.selectSkill = (skill) => {
-            playHoverSound();
-            document.dispatchEvent(new CustomEvent('skillSelected', { detail: skill }));
-        }
-
-        document.getElementById('start-btn').addEventListener('click', () => {
-            window.startAmbientDrone();
-        });
-
-        // Realistic 4D Mouse Parallax
+        // 4D Mouse Parallax
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 2;
             const y = (e.clientY / window.innerHeight - 0.5) * 2;
-
             const app = document.getElementById('app');
-            if(app) {
-                const gameContainer = document.getElementById('game-container');
-                if(gameContainer) gameContainer.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(50px)`;
-                
-                const uiLayer = document.getElementById('ui-layer');
-                if(uiLayer) uiLayer.style.transform = `rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateZ(80px)`;
-                
-                const typingHud = document.getElementById('typing-hud');
-                if(typingHud) typingHud.style.transform = `translateX(-50%) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(100px)`;
-
-                const webcam = document.getElementById('webcam');
-                if(webcam) webcam.style.transform = `scaleX(-1) rotateY(${x * -10}deg) rotateX(${-y * 10}deg) translateZ(90px)`;
+            if(document.body.classList.contains('game-active')) {
+                document.getElementById('game-container').style.transform = `rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateZ(50px)`;
+                document.getElementById('ui-layer').style.transform = `rotateY(${x * 20}deg) rotateX(${-y * 20}deg) translateZ(80px)`;
+                document.getElementById('typing-hud').style.transform = `translateX(-50%) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(100px)`;
+                document.getElementById('webcam').style.transform = `scaleX(-1) rotateY(${x * -15}deg) rotateX(${-y * 15}deg) translateZ(90px)`;
             }
-
-            document.querySelectorAll('.parallax-layer').forEach(layer => {
-                if(!layer.classList.contains('hidden')) {
-                    layer.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
-                }
+            document.querySelectorAll('.screen-layer:not([style*="display: none"])').forEach(layer => {
+                layer.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
             });
         });
 
@@ -482,10 +424,8 @@
             const canvas = document.getElementById('bg-canvas');
             const scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.001);
-
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000);
             camera.position.z = 500;
-
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -502,7 +442,6 @@
                 const radius = 100 + Math.random() * 900;
                 const theta = Math.random() * Math.PI * 2;
                 const z = (Math.random() - 0.5) * 2000;
-
                 posArray[i] = Math.cos(theta) * radius;
                 posArray[i+1] = Math.sin(theta) * radius;
                 posArray[i+2] = z;
@@ -516,14 +455,7 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
 
-            const material = new THREE.PointsMaterial({
-                size: 3,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-
+            const material = new THREE.PointsMaterial({ size: 3, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
             const particlesMesh = new THREE.Points(geometry, material);
             scene.add(particlesMesh);
 
@@ -535,14 +467,13 @@
 
             const animate = () => {
                 requestAnimationFrame(animate);
-                particlesMesh.position.z += document.body.classList.contains('flow-state-active') ? 12 : 2;
+                particlesMesh.position.z += document.body.classList.contains('flow-state-active') ? 15 : 2;
                 if(particlesMesh.position.z > 1000) particlesMesh.position.z = -1000;
                 particlesMesh.rotation.z += 0.001;
 
                 camera.position.x += (mouseX - camera.position.x) * 0.05;
                 camera.position.y += (-mouseY - camera.position.y) * 0.05;
                 camera.lookAt(scene.position);
-
                 renderer.render(scene, camera);
             };
             animate();
@@ -553,7 +484,6 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         };
-
         window.onload = init3DBackground;
     </script>
   </body>

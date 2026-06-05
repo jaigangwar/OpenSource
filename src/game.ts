@@ -3,6 +3,7 @@ import { SKILL_DATA, SkillSnippet } from './content';
 
 export class MainScene extends Phaser.Scene {
     private skill: string = 'Python';
+    private isNeuralMode: boolean = false;
     private snippets: SkillSnippet[] = [];
     private currentSnippetIndex = 0;
     private typedText = "";
@@ -31,8 +32,9 @@ export class MainScene extends Phaser.Scene {
         super('MainScene');
     }
 
-    init(data: { skill: string }) {
+    init(data: { skill: string, isNeuralMode: boolean }) {
         this.skill = data.skill || 'Python';
+        this.isNeuralMode = data.isNeuralMode !== undefined ? data.isNeuralMode : true;
         this.snippets = SKILL_DATA[this.skill] || SKILL_DATA["Python"];
         this.currentSnippetIndex = 0;
         this.typedText = "";
@@ -41,6 +43,7 @@ export class MainScene extends Phaser.Scene {
         this.currentStreak = 0;
         this.maxStreak = 0;
         this.isFlowState = false;
+        this.focusLevel = 100;
         
         // Init Audio
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -117,7 +120,6 @@ export class MainScene extends Phaser.Scene {
         const osc = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
         osc.type = 'triangle';
-        // Pitch varies slightly for realism
         osc.frequency.setValueAtTime(700 + Math.random() * 300, this.audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(100, this.audioCtx.currentTime + 0.05);
         gainNode.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
@@ -210,8 +212,17 @@ export class MainScene extends Phaser.Scene {
                 this.typedText += key;
                 this.totalChars++;
                 this.currentStreak++;
-                if (this.currentStreak > this.maxStreak) this.maxStreak = this.currentStreak;
+                if (this.currentStreak > this.maxStreak) {
+                    this.maxStreak = this.currentStreak;
+                    (window as any).maxStreakAchieved = this.maxStreak;
+                }
+                
                 this.playASMRClick();
+
+                // Dynamic Camera Pump effect for ultra-realism typing feel
+                this.cameras.main.zoomTo(1.02, 30, 'Linear', true, (cam, prog) => {
+                    if (prog === 1) cam.zoomTo(1, 30);
+                });
 
                 if (this.isFlowState) {
                     this.flowParticles.emitParticleAt(
@@ -294,6 +305,11 @@ export class MainScene extends Phaser.Scene {
         const accuracy = Math.round(((this.totalChars - this.errors) / Math.max(1, this.totalChars)) * 100);
         const progress = Math.round((this.currentSnippetIndex / this.snippets.length) * 100);
 
+        // Force focus level to 100 if manual override mode
+        if (!this.isNeuralMode) {
+            this.focusLevel = 100;
+        }
+
         // Flow State Logic
         if (this.focusLevel >= 90 && this.currentStreak > 20) {
             if (!this.isFlowState) {
@@ -313,8 +329,8 @@ export class MainScene extends Phaser.Scene {
             }
         }
 
-        // Fog Effect
-        if (!this.isFlowState && this.focusLevel < 50) {
+        // Fog Effect (Only runs if Neural Mode is active)
+        if (this.isNeuralMode && !this.isFlowState && this.focusLevel < 50) {
             this.codeText.setAlpha(0.2 + (this.focusLevel / 100));
             this.codeText.setScale(1 + (50 - this.focusLevel) / 300);
             // Constant subtle shake to indicate instability
@@ -341,7 +357,11 @@ export class MainScene extends Phaser.Scene {
     }
 
     setFocusLevel(level: number) {
-        this.focusLevel = level;
+        if (this.isNeuralMode) {
+            this.focusLevel = level;
+        } else {
+            this.focusLevel = 100;
+        }
     }
 
     private endSession() {

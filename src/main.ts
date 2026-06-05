@@ -13,16 +13,13 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 let game: Phaser.Game;
-let tracker: FocusTracker;
+let tracker: FocusTracker | null = null;
 let focusHistory: number[] = [];
 let sessionInterval: any;
 let wpmHistory: number[] = [];
 let currentStats = { wpm: 0, accuracy: 100, progress: 0 };
+let currentNeuralMode = false;
 
-const startBtn = document.getElementById('start-btn') as HTMLButtonElement;
-const overlay = document.getElementById('overlay') as HTMLElement;
-const loadingText = document.getElementById('loading') as HTMLElement;
-const skillSelection = document.getElementById('skill-selection') as HTMLElement;
 const webcamElement = document.getElementById('webcam') as HTMLVideoElement;
 const focusVal = document.getElementById('focus-val') as HTMLElement;
 const focusBar = document.getElementById('focus-bar') as HTMLElement;
@@ -44,66 +41,68 @@ const progVal = document.getElementById('prog-val') as HTMLElement;
     endSession();
 };
 
-startBtn.addEventListener('click', async () => {
-  startBtn.classList.add('hidden');
-  loadingText.classList.remove('hidden');
+(window as any).startApp = async (isNeuralMode: boolean, skill: string) => {
+    currentNeuralMode = isNeuralMode;
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480 } 
-    });
-    webcamElement.srcObject = stream;
+    if (isNeuralMode) {
+        try {
+            webcamElement.style.display = 'block';
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+            webcamElement.srcObject = stream;
+            tracker = new FocusTracker(webcamElement);
+            await tracker.initialize();
+        } catch (err) {
+            console.error("Camera access failed", err);
+            alert("Camera required for Neural Link. Falling back to Manual Override.");
+            currentNeuralMode = false;
+            webcamElement.style.display = 'none';
+        }
+    } else {
+        webcamElement.style.display = 'none';
+        focusVal.innerText = "100%";
+        focusBar.style.width = "100%";
+    }
 
-    tracker = new FocusTracker(webcamElement);
-    await tracker.initialize();
-
-    overlay.classList.add('hidden');
-    skillSelection.classList.remove('hidden');
-
-  } catch (err) {
-    console.error("Error starting game:", err);
-    alert("Neural Link Failed: Camera access is required.");
-    startBtn.classList.remove('hidden');
-    loadingText.classList.add('hidden');
-  }
-});
-
-document.addEventListener('skillSelected', (e: any) => {
-    const skill = e.detail;
-    skillSelection.classList.add('hidden');
-    
     game = new Phaser.Game(config);
     
-    // Pass skill to scene once it's ready
+    // Pass skill and mode to scene once it's ready
     game.events.once('ready', () => {
-        game.scene.start('MainScene', { skill });
+        game.scene.start('MainScene', { skill, isNeuralMode: currentNeuralMode });
     });
 
     startMonitoring();
-});
+};
+
 
 function startMonitoring() {
   focusHistory = [];
   wpmHistory = [];
+  
   sessionInterval = setInterval(() => {
-    const currentFocus = tracker.calculateFocus();
+    let currentFocus = 100;
+
+    if (currentNeuralMode && tracker) {
+        currentFocus = tracker.calculateFocus();
+    }
+
     focusHistory.push(currentFocus);
     wpmHistory.push(currentStats.wpm);
 
-    // Update UI
-    focusVal.innerText = `${Math.round(currentFocus)}%`;
-    focusBar.style.width = `${currentFocus}%`;
-    
-    // Cyberpunk color shifting
-    if (currentFocus > 80) {
-        focusBar.style.backgroundColor = '#00f3ff'; // Cyan
-        focusBar.style.boxShadow = '0 0 15px #00f3ff';
-    } else if (currentFocus > 40) {
-        focusBar.style.backgroundColor = '#ffeb3b'; // Yellow
-        focusBar.style.boxShadow = '0 0 10px #ffeb3b';
-    } else {
-        focusBar.style.backgroundColor = '#ff00ff'; // Magenta
-        focusBar.style.boxShadow = '0 0 15px #ff00ff';
+    // Update UI if in Neural Mode (otherwise it's locked at 100%)
+    if (currentNeuralMode) {
+        focusVal.innerText = `${Math.round(currentFocus)}%`;
+        focusBar.style.width = `${currentFocus}%`;
+        
+        if (currentFocus > 80) {
+            focusBar.style.backgroundColor = '#00f3ff';
+            focusBar.style.boxShadow = '0 0 15px #00f3ff';
+        } else if (currentFocus > 40) {
+            focusBar.style.backgroundColor = '#ffeb3b';
+            focusBar.style.boxShadow = '0 0 10px #ffeb3b';
+        } else {
+            focusBar.style.backgroundColor = '#ff00ff';
+            focusBar.style.boxShadow = '0 0 15px #ff00ff';
+        }
     }
 
     // Update Game
@@ -118,13 +117,22 @@ function startMonitoring() {
 function endSession() {
   clearInterval(sessionInterval);
   const dashboard = document.getElementById('dashboard') as HTMLElement;
-  dashboard.classList.remove('hidden');
+  dashboard.style.display = 'flex';
+  
+  // Hide game container smoothly
+  const appContainer = document.getElementById('app');
+  if(appContainer) appContainer.style.opacity = '0';
 
-  const avgFocus = Math.round(focusHistory.reduce((a, b) => a + b, 0) / Math.max(1, focusHistory.length));
+  const avgFocus = currentNeuralMode 
+        ? Math.round(focusHistory.reduce((a, b) => a + b, 0) / Math.max(1, focusHistory.length))
+        : 100;
   
   document.getElementById('res-wpm')!.innerText = currentStats.wpm.toString();
   document.getElementById('res-acc')!.innerText = currentStats.accuracy.toString();
   document.getElementById('res-focus')!.innerText = avgFocus.toString();
+  
+  const maxStreakElem = (window as any).maxStreakAchieved || 0;
+  document.getElementById('res-streak')!.innerText = maxStreakElem.toString();
 
   // Rank Calculation
   const score = (currentStats.wpm * 0.5) + (currentStats.accuracy * 0.3) + (avgFocus * 0.2);
