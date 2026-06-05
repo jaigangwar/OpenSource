@@ -9,12 +9,15 @@ export class MainScene extends Phaser.Scene {
     private typedText = "";
     private focusLevel = 100;
     
-    // UI Elements
-    private codeText!: Phaser.GameObjects.Text;
-    private explanationText!: Phaser.GameObjects.Text;
+    // UI Elements (Phaser)
     private tunnelGraphics!: Phaser.GameObjects.Graphics;
     private flowParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
     private explosionParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
+    
+    // HTML UI Elements
+    private codeOverlay!: HTMLElement | null;
+    private codeHTML!: HTMLElement | null;
+    private explHTML!: HTMLElement | null;
     
     // Stats & Flow State
     private startTime = 0;
@@ -44,6 +47,11 @@ export class MainScene extends Phaser.Scene {
         this.maxStreak = 0;
         this.isFlowState = false;
         this.focusLevel = 100;
+        
+        // Grab HTML Elements
+        this.codeOverlay = document.getElementById('code-overlay');
+        this.codeHTML = document.getElementById('code-text');
+        this.explHTML = document.getElementById('explanation-text');
         
         // Init Audio
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -81,27 +89,6 @@ export class MainScene extends Phaser.Scene {
             emitting: false
         });
         
-        // Main Code Display
-        this.codeText = this.add.text(400, 300, '', {
-            fontFamily: 'Share Tech Mono',
-            fontSize: '32px',
-            color: '#ffffff',
-            align: 'center',
-            wordWrap: { width: 700 },
-            lineSpacing: 10
-        }).setOrigin(0.5);
-
-        // Explanation text (appears after snippet)
-        this.explanationText = this.add.text(400, 480, '', {
-            fontFamily: 'Share Tech Mono',
-            fontSize: '20px',
-            color: '#00f3ff',
-            align: 'center',
-            wordWrap: { width: 650 },
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setAlpha(0);
-
         // Setup Keyboard
         this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
             if (this.isFinished) return;
@@ -147,7 +134,6 @@ export class MainScene extends Phaser.Scene {
 
     private playEpicChime() {
         if (!this.audioCtx) return;
-        // Synth Chime for completing a snippet
         [440, 554, 659, 880].forEach((freq, index) => {
             const osc = this.audioCtx.createOscillator();
             const gainNode = this.audioCtx.createGain();
@@ -165,7 +151,6 @@ export class MainScene extends Phaser.Scene {
 
     private playFlowEntrySound() {
         if (!this.audioCtx) return;
-        // Deep bass sweep / sonic boom
         const osc = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
         osc.type = 'sine';
@@ -207,9 +192,13 @@ export class MainScene extends Phaser.Scene {
         const target = this.snippets[this.currentSnippetIndex].text;
         const key = event.key;
 
-        if (key.length === 1) { 
-            if (key === target[this.typedText.length]) {
-                this.typedText += key;
+        // Allow proper Backspace handling (Optional, let's keep strict arcade for now)
+        if (key.length === 1 || key === 'Enter') { 
+            // We'll treat 'Enter' as a single keystroke if the target expects a newline
+            const charToMatch = key === 'Enter' ? '\n' : key;
+
+            if (charToMatch === target[this.typedText.length]) {
+                this.typedText += charToMatch;
                 this.totalChars++;
                 this.currentStreak++;
                 if (this.currentStreak > this.maxStreak) {
@@ -219,7 +208,7 @@ export class MainScene extends Phaser.Scene {
                 
                 this.playASMRClick();
 
-                // Dynamic Camera Pump effect for ultra-realism typing feel
+                // Dynamic Camera Pump effect
                 this.cameras.main.zoomTo(1.02, 30, 'Linear', true, (cam, prog) => {
                     if (prog === 1) cam.zoomTo(1, 30);
                 });
@@ -234,9 +223,17 @@ export class MainScene extends Phaser.Scene {
             } else {
                 this.errors++;
                 this.currentStreak = 0;
-                // Severe screen shake on error
+                
+                // Shake HTML Element
+                if(this.codeOverlay) {
+                    this.codeOverlay.classList.remove('shake-error');
+                    void this.codeOverlay.offsetWidth; // trigger reflow
+                    this.codeOverlay.classList.add('shake-error');
+                }
+
+                // Phaser Screen Flash
                 this.cameras.main.shake(150, 0.01);
-                this.cameras.main.flash(200, 255, 0, 0); // Red flash
+                this.cameras.main.flash(200, 255, 0, 0);
                 this.playErrorGlitch();
             }
         }
@@ -250,48 +247,60 @@ export class MainScene extends Phaser.Scene {
 
     private completeSnippet() {
         const explanation = this.snippets[this.currentSnippetIndex].explanation;
-        this.explanationText.setText(explanation);
+        
+        if (this.explHTML) {
+            this.explHTML.innerText = explanation;
+            this.explHTML.style.opacity = '1';
+        }
         
         // Explode particles & white flash
         this.explosionParticles.emitParticleAt(400, 300, 50);
         this.cameras.main.flash(300, 255, 255, 255);
         this.playEpicChime();
-
-        // Tweens for smooth text appearance
-        this.tweens.add({
-            targets: this.explanationText,
-            alpha: 1,
-            y: 450,
-            duration: 500,
-            ease: 'Power2'
-        });
         
         // JARVIS Voice AI
         this.speakExplanation(explanation);
         
         this.time.delayedCall(4000, () => {
-            this.tweens.add({
-                targets: this.explanationText,
-                alpha: 0,
-                y: 480,
-                duration: 300,
-                onComplete: () => {
-                    this.currentSnippetIndex++;
-                    this.updateSnippet();
-                }
-            });
+            if (this.explHTML) {
+                this.explHTML.style.opacity = '0';
+            }
+            this.currentSnippetIndex++;
+            this.updateSnippet();
         });
+    }
+
+    private escapeHTML(str: string) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
     }
 
     private renderText() {
         const target = this.snippets[this.currentSnippetIndex].text;
-        this.codeText.setText(target);
         
-        if (this.typedText.length > 0) {
-            this.codeText.setTint(0x666666); 
-        } else {
-            this.codeText.clearTint();
+        if (!this.codeHTML) return;
+
+        const typed = target.substring(0, this.typedText.length);
+        let cursorChar = target.substring(this.typedText.length, this.typedText.length + 1);
+        const remaining = target.substring(this.typedText.length + 1);
+
+        // If cursor is a newline, show a return symbol so it's visible
+        if (cursorChar === '\n') {
+            cursorChar = '↵\n';
+        } else if (cursorChar === '') {
+            cursorChar = ' ';
         }
+
+        this.codeHTML.innerHTML = `
+            <span class="typed-correct">${this.escapeHTML(typed)}</span><span class="typed-cursor">${this.escapeHTML(cursorChar)}</span><span>${this.escapeHTML(remaining)}</span>
+        `;
     }
 
     update() {
@@ -300,8 +309,12 @@ export class MainScene extends Phaser.Scene {
         this.drawTunnel();
 
         const now = Date.now();
-        const minutes = (now - this.startTime) / 60000;
-        const wpm = Math.round((this.totalChars / 5) / Math.max(0.01, minutes)) || 0;
+        const elapsedMinutes = (now - this.startTime) / 60000;
+        
+        // Fix WPM logic to prevent massive spikes in the first few seconds
+        const effectiveMinutes = Math.max(0.05, elapsedMinutes); 
+        const wpm = Math.round((this.totalChars / 5) / effectiveMinutes) || 0;
+        
         const accuracy = Math.round(((this.totalChars - this.errors) / Math.max(1, this.totalChars)) * 100);
         const progress = Math.round((this.currentSnippetIndex / this.snippets.length) * 100);
 
@@ -316,7 +329,6 @@ export class MainScene extends Phaser.Scene {
                 this.isFlowState = true;
                 document.body.classList.add('flow-state-active');
                 document.getElementById('flow-state-indicator')!.style.opacity = '1';
-                this.codeText.setTint(0xffaa00);
                 this.cameras.main.flash(500, 255, 170, 0); // Gold flash on entry
                 this.playFlowEntrySound();
             }
@@ -325,19 +337,21 @@ export class MainScene extends Phaser.Scene {
                 this.isFlowState = false;
                 document.body.classList.remove('flow-state-active');
                 document.getElementById('flow-state-indicator')!.style.opacity = '0';
-                this.codeText.clearTint();
             }
         }
 
         // Fog Effect (Only runs if Neural Mode is active)
-        if (this.isNeuralMode && !this.isFlowState && this.focusLevel < 50) {
-            this.codeText.setAlpha(0.2 + (this.focusLevel / 100));
-            this.codeText.setScale(1 + (50 - this.focusLevel) / 300);
-            // Constant subtle shake to indicate instability
-            this.cameras.main.shake(100, 0.001 * ((50 - this.focusLevel) / 10));
-        } else {
-            this.codeText.setAlpha(1);
-            this.codeText.setScale(this.isFlowState ? 1.05 : 1);
+        if (this.isNeuralMode && this.codeOverlay) {
+            if (!this.isFlowState && this.focusLevel < 50) {
+                const blurAmount = Math.max(0, 5 - (this.focusLevel / 10));
+                this.codeOverlay.style.filter = `blur(${blurAmount}px)`;
+                this.codeOverlay.style.opacity = `${0.3 + (this.focusLevel / 100)}`;
+                // Phaser shake
+                this.cameras.main.shake(100, 0.001 * ((50 - this.focusLevel) / 10));
+            } else {
+                this.codeOverlay.style.filter = `none`;
+                this.codeOverlay.style.opacity = `1`;
+            }
         }
 
         (window as any).updateStats({ wpm, accuracy, progress, streak: this.currentStreak, maxStreak: this.maxStreak });
@@ -345,7 +359,7 @@ export class MainScene extends Phaser.Scene {
 
     private drawTunnel() {
         this.tunnelGraphics.clear();
-        const time = this.time.now * (this.isFlowState ? 0.008 : 0.002); // Faster in flow state
+        const time = this.time.now * (this.isFlowState ? 0.008 : 0.002);
         const color = this.isFlowState ? 0xffaa00 : 0x00f3ff;
         
         for (let i = 0; i < 6; i++) {
@@ -366,6 +380,7 @@ export class MainScene extends Phaser.Scene {
 
     private endSession() {
         this.isFinished = true;
+        if(this.codeOverlay) this.codeOverlay.style.display = 'none';
         (window as any).onSessionEnd();
     }
 }

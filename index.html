@@ -11,9 +11,12 @@
         --neon-cyan: #00f3ff;
         --neon-magenta: #ff00ff;
         --neon-gold: #ffaa00;
+        --neon-green: #00ff00;
         --dark-bg: transparent;
         --panel-bg: rgba(10, 15, 25, 0.7);
       }
+
+      * { box-sizing: border-box; }
 
       body {
         margin: 0;
@@ -45,11 +48,23 @@
         80% { transform: translate(2px, -2px) }
         100% { transform: translate(0) }
       }
-
       .glitch-active {
         animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
         color: var(--neon-magenta) !important;
         text-shadow: -3px 0 red, 3px 0 blue !important;
+      }
+
+      /* Error Shake for HTML Text */
+      .shake-error {
+        animation: errShake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        border-color: red !important;
+        box-shadow: 0 0 40px red !important;
+      }
+      @keyframes errShake {
+        10%, 90% { transform: translate(-50%, -50%) translateZ(80px) translate3d(-5px, 0, 0); }
+        20%, 80% { transform: translate(-50%, -50%) translateZ(80px) translate3d(5px, 0, 0); }
+        30%, 50%, 70% { transform: translate(-50%, -50%) translateZ(80px) translate3d(-10px, 0, 0); }
+        40%, 60% { transform: translate(-50%, -50%) translateZ(80px) translate3d(10px, 0, 0); }
       }
 
       #bg-canvas { position: fixed; inset: 0; z-index: -2; }
@@ -68,26 +83,22 @@
         text-align: center;
         transform-style: preserve-3d;
         transition: opacity 0.5s, transform 0.5s;
+        padding: 20px;
       }
-
       .hidden { opacity: 0; pointer-events: none; transform: scale(1.1) translateZ(100px); display: none !important; }
 
       /* Typography */
       h1, h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); text-shadow: 0 0 30px var(--neon-cyan); transform: translateZ(80px); }
-      h1 { font-size: 5rem; margin-bottom: 10px; }
-      h2 { font-size: 3rem; margin-bottom: 40px; }
-      .subtitle { color: var(--neon-magenta); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 0.5rem; transform: translateZ(60px); font-size: 1.5rem; }
+      h1 { font-size: clamp(3rem, 6vw, 5rem); margin-bottom: 10px; }
+      h2 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 40px; }
+      .subtitle { color: var(--neon-magenta); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 0.5rem; transform: translateZ(60px); font-size: clamp(1rem, 2vw, 1.5rem); }
       
-      /* Terminal Typing Effect */
       #terminal-text {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 1.5rem;
-        color: #00f3ff;
-        text-align: left;
-        max-width: 800px;
-        min-height: 150px;
-        transform: translateZ(50px);
-        line-height: 1.6;
+        font-size: clamp(1.2rem, 2vw, 1.5rem);
+        color: #00f3ff; text-align: left;
+        max-width: 800px; min-height: 150px;
+        transform: translateZ(50px); line-height: 1.6;
         text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
       }
       .cursor { display: inline-block; width: 10px; height: 1.2rem; background: var(--neon-cyan); animation: blink 1s step-end infinite; }
@@ -95,7 +106,7 @@
 
       /* Buttons & Cards */
       button {
-        padding: 15px 50px; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;
+        padding: 15px 40px; font-size: clamp(1rem, 2vw, 1.2rem); font-weight: bold; letter-spacing: 2px;
         font-family: 'Orbitron', sans-serif; background: rgba(0, 243, 255, 0.1);
         color: var(--neon-cyan); border: 2px solid var(--neon-cyan);
         cursor: pointer; text-transform: uppercase; transition: all 0.3s;
@@ -103,166 +114,171 @@
       }
       button:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 40px var(--neon-cyan); transform: translateZ(60px) scale(1.05); }
 
-      .mode-cards { display: flex; gap: 40px; transform: translateZ(60px); }
+      .mode-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; transform: translateZ(60px); }
       .mode-card {
-        width: 350px; padding: 40px; border: 2px solid #444; border-radius: 12px;
+        width: 100%; max-width: 350px; padding: 30px; border: 2px solid #444; border-radius: 12px;
         background: rgba(10, 15, 25, 0.8); cursor: pointer; transition: 0.3s;
         box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform-style: preserve-3d;
       }
-      .mode-card h3 { font-family: 'Orbitron'; font-size: 1.8rem; margin: 0 0 15px 0; color: white; transition: 0.3s; }
-      .mode-card p { color: #888; font-size: 1.1rem; line-height: 1.5; }
+      .mode-card h3 { font-family: 'Orbitron'; font-size: 1.5rem; margin: 0 0 15px 0; color: white; transition: 0.3s; }
+      .mode-card p { color: #888; font-size: 1rem; line-height: 1.5; }
       .mode-card:hover { border-color: var(--neon-cyan); background: rgba(20, 30, 45, 0.9); transform: translateY(-10px) translateZ(40px) scale(1.05); box-shadow: 0 0 40px rgba(0, 243, 255, 0.3); }
       .mode-card:hover h3 { color: var(--neon-cyan); text-shadow: 0 0 15px var(--neon-cyan); }
       #mode-neural:hover { border-color: var(--neon-magenta); box-shadow: 0 0 40px rgba(255, 0, 255, 0.3); }
       #mode-neural:hover h3 { color: var(--neon-magenta); text-shadow: 0 0 15px var(--neon-magenta); }
 
       .skill-grid {
-        display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
-        max-width: 1200px; max-height: 60vh; overflow-y: auto; padding: 20px;
-        margin-top: 10px; transform: translateZ(40px);
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;
+        width: 100%; max-width: 1200px; max-height: 55vh; overflow-y: auto; padding: 20px;
+        transform: translateZ(40px);
       }
       .skill-grid::-webkit-scrollbar { width: 8px; }
       .skill-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 4px; }
       .skill-grid::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 4px; }
 
       .skill-card {
-        padding: 25px 15px; border: 1px solid #333; background: rgba(20, 25, 35, 0.8);
+        padding: 20px 10px; border: 1px solid #333; background: rgba(20, 25, 35, 0.8);
         cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        text-transform: uppercase; font-family: 'Orbitron', sans-serif; font-size: 1.1rem;
+        text-transform: uppercase; font-family: 'Orbitron', sans-serif; font-size: 1rem;
         border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); position: relative; overflow: hidden;
       }
       .skill-card::before { content:''; position:absolute; top:0; left:-100%; width:50%; height:100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-20deg); transition: 0.5s; }
       .skill-card:hover::before { left: 200%; }
       .skill-card:hover {
         border-color: var(--neon-cyan); box-shadow: 0 15px 40px rgba(0, 243, 255, 0.5), inset 0 0 20px rgba(0, 243, 255, 0.3);
-        transform: translateY(-10px) translateZ(30px) scale(1.1); background: rgba(30, 40, 55, 0.9);
+        transform: translateY(-5px) translateZ(20px) scale(1.05); background: rgba(30, 40, 55, 0.9);
         color: white; text-shadow: 0 0 15px var(--neon-cyan);
       }
 
       /* Holographic Tutorial Panel */
       .holo-panel {
-        background: rgba(0, 20, 40, 0.6);
-        border: 2px solid var(--neon-cyan);
+        background: rgba(0, 20, 40, 0.6); border: 2px solid var(--neon-cyan);
         box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2);
-        border-radius: 20px;
-        padding: 50px;
-        max-width: 800px;
-        transform-style: preserve-3d;
-        animation: floatHolo 4s ease-in-out infinite, holoFlicker 0.1s infinite;
+        border-radius: 20px; padding: 40px; width: 90%; max-width: 800px;
+        transform-style: preserve-3d; animation: floatHolo 4s ease-in-out infinite, holoFlicker 0.1s infinite;
       }
-
-      @keyframes floatHolo {
-        0%, 100% { transform: translateZ(100px) rotateX(5deg) translateY(0px); }
-        50% { transform: translateZ(100px) rotateX(5deg) translateY(-20px); }
-      }
-
-      @keyframes holoFlicker {
-        0% { box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2); }
-        50% { box-shadow: 0 0 55px rgba(0, 243, 255, 0.4), inset 0 0 35px rgba(0, 243, 255, 0.3); }
-        100% { box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2); }
-      }
-
-      .holo-panel h2 {
-        font-size: 2.5rem;
-        margin-top: 0;
-        transform: translateZ(40px);
-        text-shadow: 0 0 20px var(--neon-cyan);
-      }
-      .holo-panel p {
-        font-size: 1.3rem;
-        line-height: 1.6;
-        color: #bbb;
-        transform: translateZ(30px);
-        margin-bottom: 40px;
-      }
-      
-      .tut-type-zone {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 4rem;
-        letter-spacing: 20px;
-        margin: 40px 0;
-        transform: translateZ(60px);
-        position: relative;
-        display: inline-block;
-      }
+      @keyframes floatHolo { 0%, 100% { transform: translateZ(100px) rotateX(5deg) translateY(0px); } 50% { transform: translateZ(100px) rotateX(5deg) translateY(-20px); } }
+      @keyframes holoFlicker { 0%, 100% { box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2); } 50% { box-shadow: 0 0 55px rgba(0, 243, 255, 0.4), inset 0 0 35px rgba(0, 243, 255, 0.3); } }
+      .holo-panel h2 { font-size: clamp(1.8rem, 3vw, 2.5rem); margin-top: 0; transform: translateZ(40px); }
+      .holo-panel p { font-size: clamp(1rem, 2vw, 1.3rem); line-height: 1.6; color: #bbb; transform: translateZ(30px); margin-bottom: 30px; }
+      .tut-type-zone { font-family: 'Share Tech Mono', monospace; font-size: clamp(2.5rem, 5vw, 4rem); letter-spacing: 15px; margin: 30px 0; transform: translateZ(60px); position: relative; display: inline-block; }
       .tut-target { color: #333; }
       .tut-typed { position: absolute; top: 0; left: 0; color: var(--neon-gold); text-shadow: 0 0 30px var(--neon-gold); white-space: nowrap; overflow: hidden; }
 
-      /* Game Elements */
-      #app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; transform-style: preserve-3d; opacity: 0; transition: opacity 1s; pointer-events: none; }
+      /* Game App Setup */
+      #app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; transform-style: preserve-3d; opacity: 0; transition: opacity 1s; pointer-events: none; width: 100vw; }
       .game-active #app { opacity: 1; pointer-events: all; }
       
-      #game-container {
-        border: 2px solid var(--neon-cyan); box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 243, 255, 0.1);
-        border-radius: 12px; overflow: hidden; position: relative; background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(4px); transition: box-shadow 0.3s, border-color 0.3s;
+      #game-container { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+      
+      /* Neon Typing UI (HTML Overlay) */
+      #code-overlay {
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%) translateZ(80px);
+        width: 90vw;
+        max-width: 900px;
+        text-align: center;
+        background: rgba(5, 10, 20, 0.85);
+        padding: 40px 20px;
+        border-radius: 12px;
+        border: 1px solid var(--neon-cyan);
+        box-shadow: 0 0 40px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+        z-index: 20;
+        transition: all 0.3s ease;
       }
-      .flow-state-active #game-container { border-color: var(--neon-gold) !important; box-shadow: 0 0 50px var(--neon-gold), inset 0 0 30px var(--neon-gold) !important; animation: pulse-gold 1s infinite alternate; }
+      .flow-state-active #code-overlay {
+        border-color: var(--neon-gold) !important;
+        box-shadow: 0 0 60px var(--neon-gold), inset 0 0 30px var(--neon-gold) !important;
+      }
+      #code-text {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-family: 'Share Tech Mono', monospace;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        color: #555;
+        text-shadow: none;
+      }
+      .typed-correct { color: var(--neon-green); text-shadow: 0 0 15px var(--neon-green); }
+      .typed-cursor { background: rgba(0, 255, 0, 0.3); color: white; border-bottom: 4px solid var(--neon-green); }
+      
+      #explanation-text {
+        margin-top: 30px;
+        font-size: clamp(1rem, 2vw, 1.3rem);
+        color: var(--neon-cyan);
+        opacity: 0;
+        transition: opacity 0.4s;
+        text-shadow: 0 0 10px var(--neon-cyan);
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px;
+        border-radius: 8px;
+        display: inline-block;
+      }
 
-      #ui-layer { position: absolute; top: 30px; left: 30px; z-index: 10; background: var(--panel-bg); padding: 20px; border-left: 4px solid var(--neon-cyan); border-radius: 4px; box-shadow: 10px 10px 30px rgba(0,0,0,0.8); }
+      /* UI Layers */
+      #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 30; background: var(--panel-bg); padding: 15px; border-left: 4px solid var(--neon-cyan); border-radius: 4px; box-shadow: 5px 5px 20px rgba(0,0,0,0.8); }
       .hud-label { font-size: 0.7rem; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 2px; }
-      .hud-val { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: white; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
-      #focus-meter { width: 100%; height: 8px; background: #222; margin-top: 5px; border-radius: 4px; overflow: hidden; }
+      .hud-val { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: white; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+      #focus-meter { width: 100%; height: 6px; background: #222; margin-top: 5px; border-radius: 4px; overflow: hidden; }
       #focus-bar { width: 0%; height: 100%; background: var(--neon-cyan); transition: width 0.3s; }
       
-      #webcam { position: absolute; bottom: 30px; right: 30px; width: 200px; height: 150px; border: 2px solid var(--neon-magenta); box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3); transform: scaleX(-1) translateZ(40px); z-index: 5; border-radius: 8px; }
+      #webcam { position: absolute; top: 20px; right: 20px; width: 160px; height: 120px; border: 2px solid var(--neon-magenta); box-shadow: 0 5px 15px rgba(255, 0, 255, 0.3); transform: scaleX(-1) translateZ(40px); z-index: 30; border-radius: 8px; }
 
       #typing-hud {
-          position: absolute; bottom: 0; left: 50%; transform-origin: bottom center; display: flex; gap: 50px;
-          background: var(--panel-bg); padding: 20px 40px; border-top: 2px solid var(--neon-cyan);
-          border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+          position: absolute; bottom: 0; left: 50%; transform-origin: bottom center; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+          background: var(--panel-bg); padding: 15px 30px; border-top: 2px solid var(--neon-cyan);
+          border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); z-index: 30; width: 95vw; max-width: 800px;
       }
       .streak-val { color: var(--neon-gold) !important; text-shadow: 0 0 10px var(--neon-gold) !important; }
 
       /* Dashboard */
-      #dashboard { position: fixed; inset: 0; background: rgba(10, 15, 20, 0.95); backdrop-filter: blur(20px); z-index: 2000; padding: 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-      .chart-container { width: 90%; max-width: 1000px; height: 400px; background: var(--panel-bg); padding: 20px; margin-top: 30px; border: 1px solid var(--neon-cyan); border-radius: 8px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.1); }
+      #dashboard { position: fixed; inset: 0; background: rgba(10, 15, 20, 0.95); backdrop-filter: blur(20px); z-index: 2000; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+      .chart-container { width: 100%; max-width: 900px; height: 300px; background: var(--panel-bg); padding: 10px; margin-top: 20px; border: 1px solid var(--neon-cyan); border-radius: 8px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.1); }
+      #final-stats { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 12px; border: 1px solid #444; margin-top: 20px; }
+      #final-stats div { font-size: clamp(1rem, 2vw, 1.2rem); }
+      
     </style>
   </head>
   <body class="crt">
     <canvas id="bg-canvas"></canvas>
     <div id="bg-overlay"></div>
 
-    <!-- 1. Click to Boot -->
     <div id="boot-screen" class="screen-layer">
-      <button id="boot-btn" class="glitch-active" style="font-size: 2rem; padding: 20px 60px;">INITIALIZE SYSTEM</button>
+      <button id="boot-btn" class="glitch-active" style="font-size: clamp(1.5rem, 4vw, 2.5rem); padding: 20px 40px;">INITIALIZE SYSTEM</button>
     </div>
 
-    <!-- 2. Cinematic Intro -->
     <div id="intro-screen" class="screen-layer" style="display:none;">
       <h1 id="glitch-title">NEURO<span style="color:white">-TYPE</span></h1>
       <div class="subtitle">Skill-Acceleration Neural Link</div>
       <div id="terminal-text"></div>
     </div>
 
-    <!-- 3. Mode Selection -->
     <div id="mode-selection" class="screen-layer" style="display:none;">
       <h2>SELECT INTERFACE MODE</h2>
       <div class="mode-cards">
         <div class="mode-card" id="mode-neural" onmouseover="playHoverSound()">
           <h3>NEURAL LINK</h3>
-          <p>Full Immersion. Uses webcam AI to track your eye gaze and head pose. Your real-world focus directly controls the in-game environment (Mental Fog, Flow State).</p>
-          <div style="margin-top:20px; color:var(--neon-magenta); font-weight:bold;">[ WEBCAM REQUIRED ]</div>
+          <p>Full Immersion. Uses webcam AI to track your eye gaze and head pose. Your real-world focus controls clarity and speed multipliers.</p>
+          <div style="margin-top:15px; color:var(--neon-magenta); font-weight:bold; font-size:0.9rem;">[ WEBCAM REQUIRED ]</div>
         </div>
         <div class="mode-card" id="mode-manual" onmouseover="playHoverSound()">
           <h3>MANUAL OVERRIDE</h3>
-          <p>Standard Arcade Mode. Focus is locked at 100%. Master your typing skills through intense visual feedback and audio cues without camera tracking.</p>
-          <div style="margin-top:20px; color:var(--neon-cyan); font-weight:bold;">[ NO CAMERA NEEDED ]</div>
+          <p>Standard Arcade Mode. Focus is locked at 100%. Master your typing skills through intense visual feedback and audio cues.</p>
+          <div style="margin-top:15px; color:var(--neon-cyan); font-weight:bold; font-size:0.9rem;">[ NO CAMERA NEEDED ]</div>
         </div>
       </div>
     </div>
 
-    <!-- 4. Skill Selection -->
     <div id="skill-selection" class="screen-layer" style="display:none;">
       <h2>SELECT NEURAL PATHWAY</h2>
       <div class="skill-grid" id="skills-container"></div>
     </div>
 
-    <!-- 5. 3D Holographic Tutorial -->
     <div id="tutorial-screen" class="screen-layer" style="display:none;">
       <div class="holo-panel" id="holo-panel">
         <h2 id="tut-title">PHASE 1: CALIBRATION</h2>
-        <p id="tut-text">Welcome to the Neuro-Type interface. Your objective is to type the upcoming data streams as accurately and quickly as possible.</p>
+        <p id="tut-text">Welcome to the Neuro-Type interface. Type the upcoming data streams rapidly. Correct inputs glow green.</p>
         
         <div id="tut-interactive" class="tut-type-zone" style="display:none;">
            <span class="tut-target" id="tut-target-text">SYNC</span>
@@ -273,11 +289,10 @@
       </div>
     </div>
 
-    <!-- Final Dashboard -->
     <div id="dashboard" class="screen-layer" style="display:none;">
-      <h1 style="transform: translateZ(60px);">SESSION <span style="color:var(--neon-magenta)">ANALYSIS</span></h1>
-      <div id="rank-display" style="font-size: 6rem; font-family: 'Orbitron'; font-weight: 900; color: var(--neon-cyan); transform: translateZ(80px);">RANK: S</div>
-      <div id="final-stats" style="margin: 30px 0; display: flex; gap: 50px; font-size: 1.5rem; background: rgba(0,0,0,0.6); padding: 30px; border-radius: 12px; border: 1px solid #444; transform: translateZ(50px); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+      <h1 style="transform: translateZ(60px); margin: 10px 0;">SESSION <span style="color:var(--neon-magenta)">ANALYSIS</span></h1>
+      <div id="rank-display" style="font-size: clamp(4rem, 8vw, 6rem); font-family: 'Orbitron'; font-weight: 900; color: var(--neon-cyan); transform: translateZ(80px);">RANK: S</div>
+      <div id="final-stats">
           <div>AVG SPEED: <span id="res-wpm" style="color: var(--neon-cyan); font-weight: bold;">--</span> WPM</div>
           <div>ACCURACY: <span id="res-acc" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
           <div id="focus-stat-container">FOCUS: <span id="res-focus" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
@@ -290,16 +305,22 @@
       <button onclick="location.reload()" onmouseover="playHoverSound()">Reboot System</button>
     </div>
 
-    <!-- Game App -->
     <div id="app">
+      <!-- Phaser Canvas Container -->
+      <div id="game-container"></div>
+      
+      <!-- High-Fidelity HTML Text Overlay -->
+      <div id="code-overlay" class="parallax-el">
+          <div id="code-text"></div>
+          <div id="explanation-text"></div>
+      </div>
+
       <div id="ui-layer" class="parallax-el">
         <div class="hud-label" id="sync-label">Neural Sync</div>
         <div id="focus-val" class="hud-val">100%</div>
         <div id="focus-meter"><div id="focus-bar" style="width: 100%;"></div></div>
       </div>
 
-      <div id="game-container" class="parallax-el"></div>
-      
       <div id="typing-hud" class="parallax-el">
           <div class="hud-item">
               <div class="hud-label">Speed</div>
@@ -325,7 +346,6 @@
     <script type="module" src="/src/main.ts"></script>
     
     <script>
-        /* DOM Elements & State */
         const bootScreen = document.getElementById('boot-screen');
         const introScreen = document.getElementById('intro-screen');
         const modeScreen = document.getElementById('mode-selection');
@@ -337,7 +357,6 @@
         let selectedMode = 'manual';
         let selectedSkill = '';
         
-        /* Audio Setup */
         window.playHoverSound = () => {
             if(!audioCtx || audioCtx.state === 'suspended') return;
             const osc = audioCtx.createOscillator();
@@ -411,7 +430,6 @@
             }
         };
 
-        /* Flow Logic */
         document.getElementById('boot-btn').addEventListener('click', () => {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -437,10 +455,10 @@
                     if(currentChar < lines[currentLine].length) {
                         termText.innerHTML = lines.slice(0, currentLine).join('<br>') + (currentLine > 0 ? '<br>' : '') + lines[currentLine].substring(0, currentChar + 1) + '<span class="cursor"></span>';
                         currentChar++;
-                        setTimeout(typeWriter, Math.random() * 40 + 10);
+                        setTimeout(typeWriter, Math.random() * 30 + 10);
                     } else {
                         currentChar = 0; currentLine++;
-                        setTimeout(typeWriter, 300);
+                        setTimeout(typeWriter, 200);
                     }
                 } else {
                     termText.innerHTML = lines.join('<br>') + '<span class="cursor"></span>';
@@ -449,19 +467,19 @@
                         introScreen.style.display = 'none';
                         modeScreen.style.display = 'flex';
                         speakVoice("System online. Neural pathways established. Please select your interface mode.");
-                    }, 1000);
+                    }, 800);
                 }
             };
             typeWriter();
         });
 
-        // Mode Selection
         document.getElementById('mode-neural').addEventListener('click', () => {
             selectedMode = 'neural';
             modeScreen.style.display = 'none';
             skillScreen.style.display = 'flex';
             playHoverSound();
         });
+        
         document.getElementById('mode-manual').addEventListener('click', () => {
             selectedMode = 'manual';
             modeScreen.style.display = 'none';
@@ -473,7 +491,6 @@
             document.getElementById('focus-bar').style.boxShadow = '0 0 15px var(--neon-gold)';
         });
 
-        // Populate Skills
         const subjects = ["Python", "SQL", "Java", "HTML/CSS", "React", "TypeScript", "C++", "Rust", "Go", "Node.js", "Linux Bash", "Docker", "Git", "CyberSecurity", "Machine Learning", "Data Science", "Regex", "Quantum Computing", "Astronomy", "Tech Trivia"];
         const grid = document.getElementById('skills-container');
         subjects.forEach(subject => {
@@ -490,7 +507,6 @@
             grid.appendChild(card);
         });
 
-        // 3D Holographic Tutorial System
         let tutStep = 1;
         let tutTyped = "";
         const tutTarget = "SYNC";
@@ -504,7 +520,7 @@
             setTimeout(() => panel.classList.remove('glitch-active'), 500);
 
             if(selectedMode === 'neural') {
-                speakVoice("Phase 1 Calibration. Your webcam tracks your real-world focus. Looking away will induce mental fog. Maintain eye contact.", 1.1);
+                speakVoice("Phase 1 Calibration. Your webcam tracks your real-world focus. Looking away will induce mental fog.", 1.1);
             } else {
                 speakVoice("Phase 1 Calibration. Manual override engaged. Focus is locked at 100 percent.", 1.1);
             }
@@ -513,12 +529,11 @@
                 playHoverSound();
                 tutStep = 2;
                 document.getElementById('tut-title').innerText = "PHASE 2: HAPTIC SYNC";
-                document.getElementById('tut-text').innerText = "Type the calibration sequence below to activate your tactile sensors. Feel the kinetic response.";
+                document.getElementById('tut-text').innerText = "Type the calibration sequence below to activate your tactile sensors. Correct keys glow neon green.";
                 document.getElementById('tut-btn').style.display = 'none';
                 document.getElementById('tut-interactive').style.display = 'inline-block';
                 speakVoice("Phase 2. Type the sequence to activate tactile sensors and complete synchronization.", 1.1);
                 
-                // Add keydown listener for tutorial
                 document.addEventListener('keydown', handleTutTyping);
             };
         }
@@ -533,12 +548,10 @@
                 document.getElementById('tut-typed-text').innerText = tutTyped;
                 playASMRClick();
                 
-                // Shake hologram
                 const panel = document.getElementById('holo-panel');
                 panel.style.transform = `translateZ(120px) rotateX(${Math.random()*10}deg) rotateY(${Math.random()*10}deg)`;
                 setTimeout(() => panel.style.transform = "", 100);
 
-                // Speed up particles globally for feedback
                 window.tutBoost = true;
 
                 if(tutTyped === tutTarget) {
@@ -563,24 +576,23 @@
             }
         }
 
-
-        // 4D Mouse Parallax
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 2;
             const y = (e.clientY / window.innerHeight - 0.5) * 2;
             
             if(document.body.classList.contains('game-active')) {
-                document.getElementById('game-container').style.transform = `rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateZ(50px)`;
-                document.getElementById('ui-layer').style.transform = `rotateY(${x * 20}deg) rotateX(${-y * 20}deg) translateZ(80px)`;
-                document.getElementById('typing-hud').style.transform = `translateX(-50%) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(100px)`;
-                document.getElementById('webcam').style.transform = `scaleX(-1) rotateY(${x * -15}deg) rotateX(${-y * 15}deg) translateZ(90px)`;
+                const overlay = document.getElementById('code-overlay');
+                if(overlay) overlay.style.transform = `translate(-50%, -50%) rotateY(${x * 5}deg) rotateX(${-y * 5}deg) translateZ(80px)`;
+                
+                document.getElementById('ui-layer').style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(60px)`;
+                document.getElementById('typing-hud').style.transform = `translateX(-50%) rotateY(${x * 5}deg) rotateX(${-y * 5}deg) translateZ(80px)`;
             }
             document.querySelectorAll('.screen-layer:not([style*="display: none"])').forEach(layer => {
-                layer.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
+                layer.style.transform = `perspective(1000px) rotateY(${x * 3}deg) rotateX(${-y * 3}deg)`;
             });
         });
 
-        // Three.js Background
+        // 3D Hexagonal Background
         const init3DBackground = () => {
             const canvas = document.getElementById('bg-canvas');
             const scene = new THREE.Scene();
@@ -592,7 +604,7 @@
             renderer.setPixelRatio(window.devicePixelRatio);
 
             const geometry = new THREE.BufferGeometry();
-            const particlesCount = 4000;
+            const particlesCount = 3000;
             const posArray = new Float32Array(particlesCount * 3);
             const colorsArray = new Float32Array(particlesCount * 3);
 
@@ -600,8 +612,12 @@
             const color2 = new THREE.Color(0xff00ff);
 
             for(let i = 0; i < particlesCount * 3; i+=3) {
-                const radius = 100 + Math.random() * 900;
-                const theta = Math.random() * Math.PI * 2;
+                const radius = 200 + Math.random() * 600;
+                // Hexagonal distribution logic
+                let theta = Math.random() * Math.PI * 2;
+                if(Math.random() > 0.3) {
+                    theta = (Math.floor(Math.random() * 6) * Math.PI / 3) + ((Math.random() - 0.5) * 0.2);
+                }
                 const z = (Math.random() - 0.5) * 2000;
                 posArray[i] = Math.cos(theta) * radius;
                 posArray[i+1] = Math.sin(theta) * radius;
@@ -631,7 +647,7 @@
                 
                 let speed = 2;
                 if(document.body.classList.contains('flow-state-active')) speed = 15;
-                if(window.tutBoost) { speed = 25; window.tutBoost = false; } // Quick burst on tutorial typing
+                if(window.tutBoost) { speed = 25; window.tutBoost = false; } 
 
                 particlesMesh.position.z += speed;
                 if(particlesMesh.position.z > 1000) particlesMesh.position.z = -1000;
