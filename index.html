@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Neuro-Type | AI-Driven Skill Accelerator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
       :root {
         --neon-cyan: #00f3ff;
         --neon-magenta: #ff00ff;
+        --neon-gold: #ffaa00;
         --dark-bg: #0b0e14;
         --panel-bg: rgba(20, 25, 35, 0.9);
       }
@@ -37,6 +38,18 @@
         overflow: hidden;
         position: relative;
         background: #000;
+        transition: box-shadow 0.3s, border-color 0.3s;
+      }
+
+      .flow-state-active #game-container {
+        border-color: var(--neon-gold) !important;
+        box-shadow: 0 0 40px var(--neon-gold) !important;
+        animation: pulse-gold 1s infinite alternate;
+      }
+
+      @keyframes pulse-gold {
+        0% { box-shadow: 0 0 20px var(--neon-gold); }
+        100% { box-shadow: 0 0 60px var(--neon-gold); }
       }
 
       #ui-layer {
@@ -49,6 +62,20 @@
         border-left: 4px solid var(--neon-magenta);
         pointer-events: none;
         min-width: 180px;
+      }
+
+      #flow-state-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        color: var(--neon-gold);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 900;
+        text-shadow: 0 0 10px var(--neon-gold);
+        opacity: 0;
+        transition: opacity 0.5s;
       }
 
       .hud-label {
@@ -94,7 +121,7 @@
 
       h1 {
         font-family: 'Orbitron', sans-serif;
-        font-size: 3.5rem;
+        font-size: 4rem;
         color: var(--neon-cyan);
         text-shadow: 0 0 20px var(--neon-cyan);
         margin-bottom: 10px;
@@ -150,6 +177,7 @@
         background: var(--panel-bg);
         padding: 20px;
         margin-top: 20px;
+        border: 1px solid var(--neon-cyan);
       }
 
       #webcam {
@@ -161,23 +189,27 @@
         border: 2px solid var(--neon-magenta);
         transform: scaleX(-1);
         z-index: 5;
+        border-radius: 4px;
       }
 
       .hidden { display: none !important; }
       
       button {
-        padding: 12px 30px;
+        padding: 15px 40px;
+        font-size: 1.2rem;
         font-family: 'Orbitron', sans-serif;
         background: transparent;
         color: var(--neon-cyan);
         border: 2px solid var(--neon-cyan);
         cursor: pointer;
         text-transform: uppercase;
+        transition: all 0.3s;
       }
 
       button:hover {
         background: var(--neon-cyan);
         color: black;
+        box-shadow: 0 0 20px var(--neon-cyan);
       }
 
       #typing-hud {
@@ -190,6 +222,11 @@
           background: var(--panel-bg);
           padding: 10px 30px;
           border-top: 2px solid var(--neon-cyan);
+          border-radius: 8px 8px 0 0;
+      }
+
+      .streak-val {
+        color: var(--neon-gold) !important;
       }
     </style>
   </head>
@@ -197,13 +234,17 @@
     <div id="overlay">
       <h1>NEURO<span style="color:white">-TYPE</span></h1>
       <div class="subtitle">Skill-Acceleration Neural Link</div>
-      <p style="max-width: 600px; color: #888;">Your focus directly impacts your learning efficiency. High focus clears the mental fog (blurry text) and doubles your knowledge gain.</p>
+      <p style="max-width: 600px; color: #888; font-size: 1.1rem; line-height: 1.5;">
+        Experience **JARVIS-level** learning. Your webcam tracks your focus.<br><br>
+        🔥 <strong>High Focus + Zero Errors</strong> triggers <strong>FLOW STATE</strong> (God Mode).<br>
+        🔊 Listen to ASMR typing sounds and AI Voice Explanations.
+      </p>
       <button id="start-btn">Initiate Connection</button>
-      <div id="loading" class="hidden" style="margin-top: 20px; color: var(--neon-cyan);">Syncing Neural Models...</div>
+      <div id="loading" class="hidden" style="margin-top: 20px; color: var(--neon-cyan);">Syncing Neural Models & AI Voices...</div>
     </div>
 
     <div id="skill-selection" class="hidden">
-      <h2 style="font-family: 'Orbitron';">SELECT NEURAL PATHWAY</h2>
+      <h2 style="font-family: 'Orbitron'; color: white; text-shadow: 0 0 10px white;">SELECT NEURAL PATHWAY</h2>
       <div class="skill-grid">
         <div class="skill-card" onclick="selectSkill('Python')">Python</div>
         <div class="skill-card" onclick="selectSkill('SQL')">SQL</div>
@@ -215,17 +256,18 @@
 
     <div id="dashboard" class="hidden">
       <h1>SESSION <span style="color:var(--neon-magenta)">ANALYSIS</span></h1>
-      <div id="rank-display" style="font-size: 3rem; font-family: 'Orbitron'; color: var(--neon-cyan);">RANK: S</div>
-      <div id="final-stats" style="margin: 20px 0; display: flex; gap: 40px; font-size: 1.2rem;">
-          <div>AVG SPEED: <span id="res-wpm">--</span> WPM</div>
-          <div>ACCURACY: <span id="res-acc">--</span>%</div>
-          <div>FOCUS STABILITY: <span id="res-focus">--</span>%</div>
+      <div id="rank-display" style="font-size: 4rem; font-family: 'Orbitron'; font-weight: 900; color: var(--neon-cyan);">RANK: S</div>
+      <div id="final-stats" style="margin: 20px 0; display: flex; gap: 40px; font-size: 1.2rem; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; border: 1px solid #333;">
+          <div>AVG SPEED: <span id="res-wpm" style="color: var(--neon-cyan); font-weight: bold;">--</span> WPM</div>
+          <div>ACCURACY: <span id="res-acc" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
+          <div>FOCUS: <span id="res-focus" style="color: var(--neon-cyan); font-weight: bold;">--</span>%</div>
+          <div>MAX STREAK: <span id="res-streak" style="color: var(--neon-gold); font-weight: bold;">--</span></div>
       </div>
       <div class="chart-container">
         <canvas id="analytics-chart"></canvas>
       </div>
       <br>
-      <button onclick="location.reload()">New Session</button>
+      <button onclick="location.reload()">Re-Initialize Setup</button>
     </div>
 
     <div id="app">
@@ -234,6 +276,8 @@
         <div id="focus-val" class="hud-val">0%</div>
         <div id="focus-meter"><div id="focus-bar"></div></div>
       </div>
+
+      <div id="flow-state-indicator">FLOW STATE ACTIVATED</div>
 
       <div id="game-container"></div>
       
@@ -247,6 +291,10 @@
               <div id="acc-val" class="hud-val">100%</div>
           </div>
           <div class="hud-item">
+              <div class="hud-label">Combo Streak</div>
+              <div id="streak-val" class="hud-val streak-val">0</div>
+          </div>
+          <div class="hud-item">
               <div class="hud-label">Progress</div>
               <div id="prog-val" class="hud-val">0%</div>
           </div>
@@ -257,7 +305,6 @@
 
     <script type="module" src="/src/main.ts"></script>
     <script>
-        // Global helper for skill selection
         window.selectSkill = (skill) => {
             document.dispatchEvent(new CustomEvent('skillSelected', { detail: skill }));
         }
