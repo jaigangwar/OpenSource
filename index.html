@@ -48,7 +48,8 @@
 
       .glitch-active {
         animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
-        color: var(--neon-magenta);
+        color: var(--neon-magenta) !important;
+        text-shadow: -3px 0 red, 3px 0 blue !important;
       }
 
       #bg-canvas { position: fixed; inset: 0; z-index: -2; }
@@ -75,7 +76,7 @@
       h1, h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); text-shadow: 0 0 30px var(--neon-cyan); transform: translateZ(80px); }
       h1 { font-size: 5rem; margin-bottom: 10px; }
       h2 { font-size: 3rem; margin-bottom: 40px; }
-      .subtitle { color: var(--neon-magenta); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 0.5rem; transform: translateZ(60px); }
+      .subtitle { color: var(--neon-magenta); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 0.5rem; transform: translateZ(60px); font-size: 1.5rem; }
       
       /* Terminal Typing Effect */
       #terminal-text {
@@ -138,6 +139,55 @@
         color: white; text-shadow: 0 0 15px var(--neon-cyan);
       }
 
+      /* Holographic Tutorial Panel */
+      .holo-panel {
+        background: rgba(0, 20, 40, 0.6);
+        border: 2px solid var(--neon-cyan);
+        box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2);
+        border-radius: 20px;
+        padding: 50px;
+        max-width: 800px;
+        transform-style: preserve-3d;
+        animation: floatHolo 4s ease-in-out infinite, holoFlicker 0.1s infinite;
+      }
+
+      @keyframes floatHolo {
+        0%, 100% { transform: translateZ(100px) rotateX(5deg) translateY(0px); }
+        50% { transform: translateZ(100px) rotateX(5deg) translateY(-20px); }
+      }
+
+      @keyframes holoFlicker {
+        0% { box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2); }
+        50% { box-shadow: 0 0 55px rgba(0, 243, 255, 0.4), inset 0 0 35px rgba(0, 243, 255, 0.3); }
+        100% { box-shadow: 0 0 50px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.2); }
+      }
+
+      .holo-panel h2 {
+        font-size: 2.5rem;
+        margin-top: 0;
+        transform: translateZ(40px);
+        text-shadow: 0 0 20px var(--neon-cyan);
+      }
+      .holo-panel p {
+        font-size: 1.3rem;
+        line-height: 1.6;
+        color: #bbb;
+        transform: translateZ(30px);
+        margin-bottom: 40px;
+      }
+      
+      .tut-type-zone {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 4rem;
+        letter-spacing: 20px;
+        margin: 40px 0;
+        transform: translateZ(60px);
+        position: relative;
+        display: inline-block;
+      }
+      .tut-target { color: #333; }
+      .tut-typed { position: absolute; top: 0; left: 0; color: var(--neon-gold); text-shadow: 0 0 30px var(--neon-gold); white-space: nowrap; overflow: hidden; }
+
       /* Game Elements */
       #app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; transform-style: preserve-3d; opacity: 0; transition: opacity 1s; pointer-events: none; }
       .game-active #app { opacity: 1; pointer-events: all; }
@@ -175,12 +225,13 @@
 
     <!-- 1. Click to Boot -->
     <div id="boot-screen" class="screen-layer">
-      <button id="boot-btn">INITIALIZE SYSTEM</button>
+      <button id="boot-btn" class="glitch-active" style="font-size: 2rem; padding: 20px 60px;">INITIALIZE SYSTEM</button>
     </div>
 
     <!-- 2. Cinematic Intro -->
     <div id="intro-screen" class="screen-layer" style="display:none;">
       <h1 id="glitch-title">NEURO<span style="color:white">-TYPE</span></h1>
+      <div class="subtitle">Skill-Acceleration Neural Link</div>
       <div id="terminal-text"></div>
     </div>
 
@@ -205,7 +256,21 @@
     <div id="skill-selection" class="screen-layer" style="display:none;">
       <h2>SELECT NEURAL PATHWAY</h2>
       <div class="skill-grid" id="skills-container"></div>
-      <div id="loading" class="hidden" style="margin-top: 30px; font-size: 1.5rem; color: var(--neon-cyan); transform: translateZ(50px); text-shadow: 0 0 20px var(--neon-cyan);">ESTABLISHING UPLINK...</div>
+    </div>
+
+    <!-- 5. 3D Holographic Tutorial -->
+    <div id="tutorial-screen" class="screen-layer" style="display:none;">
+      <div class="holo-panel" id="holo-panel">
+        <h2 id="tut-title">PHASE 1: CALIBRATION</h2>
+        <p id="tut-text">Welcome to the Neuro-Type interface. Your objective is to type the upcoming data streams as accurately and quickly as possible.</p>
+        
+        <div id="tut-interactive" class="tut-type-zone" style="display:none;">
+           <span class="tut-target" id="tut-target-text">SYNC</span>
+           <div class="tut-typed" id="tut-typed-text"></div>
+        </div>
+        
+        <button id="tut-btn" onmouseover="playHoverSound()">ACKNOWLEDGE</button>
+      </div>
     </div>
 
     <!-- Final Dashboard -->
@@ -265,9 +330,12 @@
         const introScreen = document.getElementById('intro-screen');
         const modeScreen = document.getElementById('mode-selection');
         const skillScreen = document.getElementById('skill-selection');
+        const tutScreen = document.getElementById('tutorial-screen');
         const termText = document.getElementById('terminal-text');
         
         let audioCtx;
+        let selectedMode = 'manual';
+        let selectedSkill = '';
         
         /* Audio Setup */
         window.playHoverSound = () => {
@@ -289,6 +357,37 @@
             osc.start(); osc.stop(audioCtx.currentTime + 3);
         };
 
+        const playASMRClick = () => {
+            if(!audioCtx || audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(700 + Math.random() * 300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        const playErrorGlitch = () => {
+            if(!audioCtx || audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        const playEpicChime = () => {
+            if(!audioCtx || audioCtx.state === 'suspended') return;
+            [440, 554, 659, 880].forEach((freq, index) => {
+                const osc = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+                osc.type = 'sine'; osc.frequency.value = freq;
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime + index * 0.05);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + index * 0.05 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
+                osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + index * 0.05); osc.stop(audioCtx.currentTime + 1.0);
+            });
+        }
+
         window.startAmbientDrone = () => {
             if(!audioCtx || audioCtx.state === 'suspended') return;
             const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator(); const lfo = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -300,10 +399,11 @@
             osc1.start(); osc2.start(); lfo.start();
         };
 
-        const speakWelcome = () => {
+        const speakVoice = (text, rate=1.0) => {
             if ('speechSynthesis' in window) {
-                const msg = new SpeechSynthesisUtterance("System online. Neural pathways established. Please select your interface mode.");
-                msg.rate = 1.0; msg.pitch = 0.8;
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.rate = rate; msg.pitch = 0.8;
                 const voices = window.speechSynthesis.getVoices();
                 const v = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
                 if (v) msg.voice = v;
@@ -313,7 +413,6 @@
 
         /* Flow Logic */
         document.getElementById('boot-btn').addEventListener('click', () => {
-            // Init Audio Context on first interaction
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if(audioCtx.state === 'suspended') audioCtx.resume();
             
@@ -324,27 +423,24 @@
             window.startAmbientDrone();
             document.getElementById('glitch-title').classList.add('glitch-active');
 
-            // Typewriter effect
             const lines = [
-                "> INITIALIZING NEURAL ENGINE...",
-                "> CALIBRATING 4D PARALLAX MATRICES...",
+                "> INITIALIZING COGNITIVE ENGINE...",
+                "> SYNCING 4D PARALLAX MATRICES...",
                 "> LOADING KNOWLEDGE REPOSITORIES [20/20]...",
                 "> BYPASSING SECURITY PROTOCOLS...",
                 "> SYSTEM ONLINE."
             ];
-            let currentLine = 0;
-            let currentChar = 0;
+            let currentLine = 0; let currentChar = 0;
 
             const typeWriter = () => {
                 if(currentLine < lines.length) {
                     if(currentChar < lines[currentLine].length) {
                         termText.innerHTML = lines.slice(0, currentLine).join('<br>') + (currentLine > 0 ? '<br>' : '') + lines[currentLine].substring(0, currentChar + 1) + '<span class="cursor"></span>';
                         currentChar++;
-                        setTimeout(typeWriter, Math.random() * 50 + 20); // typing speed
+                        setTimeout(typeWriter, Math.random() * 40 + 10);
                     } else {
-                        currentChar = 0;
-                        currentLine++;
-                        setTimeout(typeWriter, 400); // line delay
+                        currentChar = 0; currentLine++;
+                        setTimeout(typeWriter, 300);
                     }
                 } else {
                     termText.innerHTML = lines.join('<br>') + '<span class="cursor"></span>';
@@ -352,7 +448,7 @@
                     setTimeout(() => {
                         introScreen.style.display = 'none';
                         modeScreen.style.display = 'flex';
-                        speakWelcome();
+                        speakVoice("System online. Neural pathways established. Please select your interface mode.");
                     }, 1000);
                 }
             };
@@ -360,7 +456,6 @@
         });
 
         // Mode Selection
-        let selectedMode = 'manual';
         document.getElementById('mode-neural').addEventListener('click', () => {
             selectedMode = 'neural';
             modeScreen.style.display = 'none';
@@ -372,8 +467,6 @@
             modeScreen.style.display = 'none';
             skillScreen.style.display = 'flex';
             playHoverSound();
-            
-            // Adjust UI for manual mode
             document.getElementById('sync-label').innerText = "System Power";
             document.getElementById('ui-layer').style.borderLeftColor = 'var(--neon-gold)';
             document.getElementById('focus-bar').style.backgroundColor = 'var(--neon-gold)';
@@ -389,25 +482,93 @@
             card.innerText = subject;
             card.onclick = () => {
                 playHoverSound();
-                document.getElementById('skills-container').style.display = 'none';
-                document.getElementById('skill-selection').querySelector('h2').style.display = 'none';
-                document.getElementById('loading').style.display = 'block';
-                // Trigger main app
-                setTimeout(() => {
-                    document.body.classList.add('game-active');
-                    skillScreen.style.display = 'none';
-                    if(window.startApp) window.startApp(selectedMode === 'neural', subject);
-                }, 500);
+                selectedSkill = subject;
+                skillScreen.style.display = 'none';
+                startTutorial();
             };
             card.onmouseover = () => window.playHoverSound();
             grid.appendChild(card);
         });
 
+        // 3D Holographic Tutorial System
+        let tutStep = 1;
+        let tutTyped = "";
+        const tutTarget = "SYNC";
+        
+        function startTutorial() {
+            tutScreen.style.display = 'flex';
+            const panel = document.getElementById('holo-panel');
+            panel.classList.add('glitch-active');
+            playEpicChime();
+            
+            setTimeout(() => panel.classList.remove('glitch-active'), 500);
+
+            if(selectedMode === 'neural') {
+                speakVoice("Phase 1 Calibration. Your webcam tracks your real-world focus. Looking away will induce mental fog. Maintain eye contact.", 1.1);
+            } else {
+                speakVoice("Phase 1 Calibration. Manual override engaged. Focus is locked at 100 percent.", 1.1);
+            }
+
+            document.getElementById('tut-btn').onclick = () => {
+                playHoverSound();
+                tutStep = 2;
+                document.getElementById('tut-title').innerText = "PHASE 2: HAPTIC SYNC";
+                document.getElementById('tut-text').innerText = "Type the calibration sequence below to activate your tactile sensors. Feel the kinetic response.";
+                document.getElementById('tut-btn').style.display = 'none';
+                document.getElementById('tut-interactive').style.display = 'inline-block';
+                speakVoice("Phase 2. Type the sequence to activate tactile sensors and complete synchronization.", 1.1);
+                
+                // Add keydown listener for tutorial
+                document.addEventListener('keydown', handleTutTyping);
+            };
+        }
+
+        function handleTutTyping(e) {
+            if(tutStep !== 2) return;
+            if(e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+            
+            const expected = tutTarget[tutTyped.length];
+            if(e.key.toUpperCase() === expected) {
+                tutTyped += expected;
+                document.getElementById('tut-typed-text').innerText = tutTyped;
+                playASMRClick();
+                
+                // Shake hologram
+                const panel = document.getElementById('holo-panel');
+                panel.style.transform = `translateZ(120px) rotateX(${Math.random()*10}deg) rotateY(${Math.random()*10}deg)`;
+                setTimeout(() => panel.style.transform = "", 100);
+
+                // Speed up particles globally for feedback
+                window.tutBoost = true;
+
+                if(tutTyped === tutTarget) {
+                    document.removeEventListener('keydown', handleTutTyping);
+                    document.getElementById('tut-title').innerText = "SYSTEM SYNCHRONIZED";
+                    document.getElementById('tut-text').innerText = "Neural uplink established. Good luck.";
+                    document.getElementById('tut-title').style.color = "var(--neon-gold)";
+                    playEpicChime();
+                    speakVoice("Synchronization complete. Entering neural pathway.");
+                    
+                    setTimeout(() => {
+                        tutScreen.style.display = 'none';
+                        document.body.classList.add('game-active');
+                        if(window.startApp) window.startApp(selectedMode === 'neural', selectedSkill);
+                    }, 2000);
+                }
+            } else {
+                playErrorGlitch();
+                const panel = document.getElementById('holo-panel');
+                panel.classList.add('glitch-active');
+                setTimeout(() => panel.classList.remove('glitch-active'), 200);
+            }
+        }
+
+
         // 4D Mouse Parallax
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 2;
             const y = (e.clientY / window.innerHeight - 0.5) * 2;
-            const app = document.getElementById('app');
+            
             if(document.body.classList.contains('game-active')) {
                 document.getElementById('game-container').style.transform = `rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateZ(50px)`;
                 document.getElementById('ui-layer').style.transform = `rotateY(${x * 20}deg) rotateX(${-y * 20}deg) translateZ(80px)`;
@@ -467,7 +628,12 @@
 
             const animate = () => {
                 requestAnimationFrame(animate);
-                particlesMesh.position.z += document.body.classList.contains('flow-state-active') ? 15 : 2;
+                
+                let speed = 2;
+                if(document.body.classList.contains('flow-state-active')) speed = 15;
+                if(window.tutBoost) { speed = 25; window.tutBoost = false; } // Quick burst on tutorial typing
+
+                particlesMesh.position.z += speed;
                 if(particlesMesh.position.z > 1000) particlesMesh.position.z = -1000;
                 particlesMesh.rotation.z += 0.001;
 
