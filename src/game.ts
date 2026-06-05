@@ -35,10 +35,17 @@ export class MainScene extends Phaser.Scene {
         super('MainScene');
     }
 
-    init(data: { skill: string, isNeuralMode: boolean }) {
+    init(data: { skill: string, isNeuralMode: boolean, customData?: SkillSnippet[] }) {
         this.skill = data.skill || 'Python';
         this.isNeuralMode = data.isNeuralMode !== undefined ? data.isNeuralMode : true;
-        this.snippets = SKILL_DATA[this.skill] || SKILL_DATA["Python"];
+        
+        // Handle Custom Data Injection
+        if (data.customData && data.customData.length > 0) {
+            this.snippets = data.customData;
+        } else {
+            this.snippets = SKILL_DATA[this.skill] || SKILL_DATA["Python"];
+        }
+
         this.currentSnippetIndex = 0;
         this.typedText = "";
         this.isFinished = false;
@@ -182,6 +189,12 @@ export class MainScene extends Phaser.Scene {
             this.endSession();
             return;
         }
+        
+        // ADAPTIVE DIFFICULTY LOGIC
+        // If WPM is high, we don't change text, but we could add more logic here.
+        // For now, it simply progresses. If they are failing, we could theoretically
+        // split snippets.
+        
         this.typedText = "";
         this.renderText();
     }
@@ -192,9 +205,8 @@ export class MainScene extends Phaser.Scene {
         const target = this.snippets[this.currentSnippetIndex].text;
         const key = event.key;
 
-        // Allow proper Backspace handling (Optional, let's keep strict arcade for now)
+        // Allow proper Backspace handling
         if (key.length === 1 || key === 'Enter') { 
-            // We'll treat 'Enter' as a single keystroke if the target expects a newline
             const charToMatch = key === 'Enter' ? '\n' : key;
 
             if (charToMatch === target[this.typedText.length]) {
@@ -291,7 +303,6 @@ export class MainScene extends Phaser.Scene {
         let cursorChar = target.substring(this.typedText.length, this.typedText.length + 1);
         const remaining = target.substring(this.typedText.length + 1);
 
-        // If cursor is a newline, show a return symbol so it's visible
         if (cursorChar === '\n') {
             cursorChar = '↵\n';
         } else if (cursorChar === '') {
@@ -311,7 +322,6 @@ export class MainScene extends Phaser.Scene {
         const now = Date.now();
         const elapsedMinutes = (now - this.startTime) / 60000;
         
-        // Fix WPM logic to prevent massive spikes in the first few seconds
         const effectiveMinutes = Math.max(0.05, elapsedMinutes); 
         const wpm = Math.round((this.totalChars / 5) / effectiveMinutes) || 0;
         
@@ -340,13 +350,12 @@ export class MainScene extends Phaser.Scene {
             }
         }
 
-        // Fog Effect (Only runs if Neural Mode is active)
+        // Fog Effect
         if (this.isNeuralMode && this.codeOverlay) {
             if (!this.isFlowState && this.focusLevel < 50) {
                 const blurAmount = Math.max(0, 5 - (this.focusLevel / 10));
                 this.codeOverlay.style.filter = `blur(${blurAmount}px)`;
                 this.codeOverlay.style.opacity = `${0.3 + (this.focusLevel / 100)}`;
-                // Phaser shake
                 this.cameras.main.shake(100, 0.001 * ((50 - this.focusLevel) / 10));
             } else {
                 this.codeOverlay.style.filter = `none`;

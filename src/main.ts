@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { MainScene } from './game';
 import { FocusTracker } from './tracker';
+import { parseCustomData } from './content';
 import Chart from 'chart.js/auto';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -19,6 +20,7 @@ let sessionInterval: any;
 let wpmHistory: number[] = [];
 let currentStats = { wpm: 0, accuracy: 100, progress: 0 };
 let currentNeuralMode = false;
+let customSkillData: any = null;
 
 const webcamElement = document.getElementById('webcam') as HTMLVideoElement;
 const focusVal = document.getElementById('focus-val') as HTMLElement;
@@ -40,6 +42,14 @@ const progVal = document.getElementById('prog-val') as HTMLElement;
 (window as any).onSessionEnd = () => {
     endSession();
 };
+
+document.addEventListener('customDataInjected', (e: any) => {
+    const rawData = e.detail;
+    customSkillData = parseCustomData(rawData);
+    
+    // Once custom data is parsed, start app normally but inject data
+    (window as any).startApp(currentNeuralMode, "Custom Data");
+});
 
 (window as any).startApp = async (isNeuralMode: boolean, skill: string) => {
     currentNeuralMode = isNeuralMode;
@@ -67,7 +77,11 @@ const progVal = document.getElementById('prog-val') as HTMLElement;
     
     // Pass skill and mode to scene once it's ready
     game.events.once('ready', () => {
-        game.scene.start('MainScene', { skill, isNeuralMode: currentNeuralMode });
+        game.scene.start('MainScene', { 
+            skill, 
+            isNeuralMode: currentNeuralMode,
+            customData: skill === "Custom Data" ? customSkillData : null
+        });
     });
 
     startMonitoring();
@@ -114,6 +128,31 @@ function startMonitoring() {
   }, 1000);
 }
 
+function updateLeaderboard(score: number) {
+    let leaderboard: number[] = JSON.parse(localStorage.getItem('neuro_leaderboard') || '[]');
+    leaderboard.push(Math.round(score));
+    leaderboard.sort((a, b) => b - a); // Descending
+    leaderboard = leaderboard.slice(0, 5); // Keep top 5
+    localStorage.setItem('neuro_leaderboard', JSON.stringify(leaderboard));
+
+    const lbContainer = document.getElementById('lb-content');
+    if (lbContainer) {
+        lbContainer.innerHTML = '';
+        leaderboard.forEach((s, idx) => {
+            const entry = document.createElement('div');
+            entry.className = 'lb-entry';
+            
+            let badge = '';
+            if (s > 85) badge = '🏆 S-Class';
+            else if (s > 70) badge = '🥇 A-Class';
+            else badge = '🥈 Elite';
+
+            entry.innerHTML = `<span>#${idx + 1}</span> <span>${badge}</span> <span>Score: ${s}</span>`;
+            lbContainer.appendChild(entry);
+        });
+    }
+}
+
 function endSession() {
   clearInterval(sessionInterval);
   const dashboard = document.getElementById('dashboard') as HTMLElement;
@@ -146,6 +185,8 @@ function endSession() {
   const rankDisplay = document.getElementById('rank-display') as HTMLElement;
   rankDisplay.innerHTML = `RANK: <span style="color:${color}">${rank}</span>`;
   rankDisplay.style.textShadow = `0 0 20px ${color}`;
+
+  updateLeaderboard(score);
 
   const canvas = document.getElementById('analytics-chart') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d');
