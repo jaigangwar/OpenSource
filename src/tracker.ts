@@ -5,6 +5,8 @@ export class FocusTracker {
   private video: HTMLVideoElement;
   private lastVideoTime = -1;
   private focusScore = 100;
+  private scoreHistory: number[] = [];
+  private readonly historyLimit = 15; // Smoother transitions
 
   constructor(videoElement: HTMLVideoElement) {
     this.video = videoElement;
@@ -33,46 +35,75 @@ export class FocusTracker {
       this.lastVideoTime = this.video.currentTime;
       const results = this.faceLandmarker.detectForVideo(this.video, startTimeMs);
 
+      let rawFocus = 100;
+
       if (results.faceLandmarks && results.faceLandmarks.length > 0) {
         const landmarks = results.faceLandmarks[0];
         
-        // Simple Focus Logic:
-        // 1. Head Pose (Yaw/Pitch) - Landmarks for nose, eyes, ears can determine if looking away
-        // 2. Eye Gaze (simplified) - MediaPipe blendshapes for eye look directions
-        
-        let currentFocus = 100;
-        
+        // 1. Gaze Analysis (using blendshapes)
         if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
             const shapes = results.faceBlendshapes[0].categories;
-            const lookLeft = shapes.find(s => s.categoryName === 'eyeLookOutLeft')?.score || 0;
-            const lookRight = shapes.find(s => s.categoryName === 'eyeLookOutRight')?.score || 0;
-            const lookUp = shapes.find(s => s.categoryName === 'eyeLookUpLeft')?.score || 0;
-            const lookDown = shapes.find(s => s.categoryName === 'eyeLookDownLeft')?.score || 0;
+            const getScore = (name: string) => shapes.find(s => s.categoryName === name)?.score || 0;
 
-            // If eyes are looking too far away from center
-            if (lookLeft > 0.4 || lookRight > 0.4 || lookUp > 0.4 || lookDown > 0.5) {
-                currentFocus -= 40;
+            const lookLeft = Math.max(getScore('eyeLookOutLeft'), getScore('eyeLookInRight'));
+            const lookRight = Math.max(getScore('eyeLookOutRight'), getScore('eyeLookInLeft'));
+            const lookUp = Math.max(getScore('eyeLookUpLeft'), getScore('eyeLookUpRight'));
+            const lookDown = Math.max(getScore('eyeLookDownLeft'), getScore('eyeLookDownRight'));
+            const blink = (getScore('eyeBlinkLeft') + getScore('eyeBlinkRight')) / 2;
+
+            // Penalty for looking away
+            const maxGaze = Math.max(lookLeft, lookRight, lookUp, lookDown);
+            if (maxGaze > 0.3) {
+                rawFocus -= (maxGaze - 0.3) * 100; // Proportional penalty
+            }
+
+            // Penalty for blinking/closed eyes (drowsiness)
+            if (blink > 0.6) {
+                rawFocus -= (blink - 0.6) * 150;
             }
         }
 
-        // Check if head is turned too much (using x-coordinates of ears vs nose as a proxy)
+        // 2. Head Pose (Yaw/Pitch)
+        // Yaw (Horizontal) - Index 1 is nose tip, 234 is left ear, 454 is right ear
         const nose = landmarks[1];
         const leftEar = landmarks[234];
         const rightEar = landmarks[454];
         const faceWidth = Math.abs(rightEar.x - leftEar.x);
-        const nosePos = (nose.x - leftEar.x) / faceWidth;
+        const noseYaw = (nose.x - leftEar.x) / faceWidth;
 
-        if (nosePos < 0.3 || nosePos > 0.7) {
-            currentFocus -= 50;
+        if (noseYaw < 0.35 || noseYaw > 0.65) {
+            const yawPenalty = Math.abs(noseYaw - 0.5) * 150;
+            rawFocus -= yawPenalty;
         }
 
-        this.focusScore = Math.max(0, Math.min(100, currentFocus));
+        // Pitch (Vertical) - Using nose Y relative to eye level and mouth
+        const eyeCenterY = (landmarks[159].y + landmarks[386].y) / 2; // Midpoint of top eyelids
+        const mouthY = landmarks[13].y; // Inner lip
+        const faceHeight = Math.abs(mouthY - eyeCenterY);
+        const nosePitch = (nose.y - eyeCenterY) / faceHeight;
+
+        if (nosePitch < 0.3 || nosePitch > 0.7) {
+            const pitchPenalty = Math.abs(nosePitch - 0.5) * 100;
+            rawFocus -= pitchPenalty;
+        }
+
       } else {
-        // No face detected = distracted
-        this.focusScore = Math.max(0, this.focusScore - 5);
+        // No face detected
+        rawFocus = 0;
       }
+
+      // Final raw clamp
+      rawFocus = Math.max(0, Math.min(100, rawFocus));
+
+      // 3. Smoothing (Moving Average)
+      this.scoreHistory.push(rawFocus);
+      if (this.scoreHistory.length > this.historyLimit) {
+        this.scoreHistory.shift();
+      }
+      
+      this.focusScore = this.scoreHistory.reduce((a, b) => a + b, 0) / this.scoreHistory.length;
     }
 
-    return this.focusScore;
+    return Math.round(this.focusScore);
   }
 }
