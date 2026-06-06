@@ -3,117 +3,259 @@ export interface SkillSnippet {
     explanation: string;
 }
 
+const p = (text: string, explanation: string) => ({ text, explanation });
+
 export const SKILL_DATA: Record<string, SkillSnippet[]> = {
     "Python": [
-        { text: "x = 5", explanation: "Basic variable assignment in Python." },
-        { text: "def get_sum(a, b):\n    return a + b", explanation: "Functions are defined using the 'def' keyword." },
-        { text: "numbers = [x**2 for x in range(10)]", explanation: "List comprehensions offer a concise way to create lists." },
-        { text: "import os\nprint(os.getcwd())", explanation: "The 'os' module provides functions for interacting with the OS." },
-        { text: "with open('file.txt', 'r') as f:\n    data = f.read()", explanation: "The 'with' statement ensures proper resource management." },
-        { text: "class Robot:\n    def __init__(self, name):\n        self.name = name", explanation: "Classes define blueprints for objects in OOP." },
-        { text: "x = lambda a, b: a * b\nprint(x(5, 6))", explanation: "Lambda functions are small, anonymous inline functions." },
-        { text: "try:\n    res = 10 / 0\nexcept ZeroDivisionError:\n    print('Error')", explanation: "Try-except blocks handle runtime errors." },
-        { text: "def decorator(func):\n    return func", explanation: "Decorators wrap a function to extend its behavior." },
-        { text: "my_dict = {'key': 'value'}\nmy_dict.get('key')", explanation: "Dictionaries store key-value pairs; .get() avoids KeyError." }
+        p("x = 5", "Variable assignment."),
+        p("def add(a, b):\n    return a + b", "Function definition."),
+        p("l = [x*x for x in range(5)]", "List comprehension."),
+        p("import os\nos.getcwd()", "Importing modules."),
+        p("class User:\n    pass", "Class definition."),
+        p("try:\n    1/0\nexcept:\n    print('Err')", "Error handling."),
+        p("with open('f.txt') as f:\n    pass", "Context manager."),
+        p("is_valid = True if x > 0 else False", "Ternary operator."),
+        p("lambda x: x + 1", "Lambda function."),
+        p("print(f'Hello {name}')", "F-string formatting.")
     ],
     "React": [
-        { text: "const UI = () => <div />", explanation: "Arrow functions provide a clean syntax for functional components." },
-        { text: "const [count, setCount] = useState(0);", explanation: "useState is a Hook that adds local state to functional components." },
-        { text: "useEffect(() => {\n    fetchData();\n}, []);", explanation: "useEffect performs side effects, like data fetching, after render." },
-        { text: "<MyComponent prop={value} />", explanation: "Components are reusable, isolated building blocks of a React UI." },
-        { text: "const memoizedValue = useMemo(() =>\n    compute(a, b), [a, b]);", explanation: "useMemo caches expensive calculations between renders." },
-        { text: "export const Context = React.createContext();", explanation: "Context provides a way to pass data through the component tree." },
-        { text: "const inputRef = useRef(null);", explanation: "useRef creates a mutable object that persists across renders." },
-        { text: "const handleBtn = useCallback(() => {\n    action();\n}, []);", explanation: "useCallback memoizes a function definition to prevent re-renders." },
-        { text: "return (\n    <React.Fragment>\n        <Child />\n    </React.Fragment>\n);", explanation: "Fragments group elements without adding extra DOM nodes." },
-        { text: "const LazyComp = React.lazy(() => import('./LazyComp'));", explanation: "React.lazy enables dynamic code splitting and lazy loading of components." }
+        p("const App = () => <div />", "Functional component."),
+        p("const [s, setS] = useState(0)", "State hook."),
+        p("useEffect(() => {}, [])", "Effect hook."),
+        p("<Child props={val} />", "Passing props."),
+        p("const ref = useRef(null)", "Ref hook."),
+        p("export default App", "Module export."),
+        p("const memo = useMemo(() => compute(), [])", "Memoization."),
+        p("return (\n    <>\n        <Nav />\n    </>\n)", "JSX Fragments."),
+        p("const ctx = createContext()", "Context API."),
+        p("const callback = useCallback(() => {}, [])", "Callback hook.")
     ],
     "SQL": [
-        { text: "SELECT * FROM users", explanation: "The SELECT statement retrieves data from a database." },
-        { text: "INSERT INTO logs (event, time)\nVALUES ('login', NOW());", explanation: "INSERT is used to add new records." },
-        { text: "UPDATE profile\nSET bio = 'Zen Master'\nWHERE id = 42;", explanation: "UPDATE modifies existing records in a table." },
-        { text: "DELETE FROM sessions\nWHERE expired = true;", explanation: "DELETE removes records from a database table." },
-        { text: "SELECT COUNT(id), role\nFROM users GROUP BY role;", explanation: "GROUP BY aggregates data based on specific columns." },
-        { text: "SELECT a.name, b.salary\nFROM emp a JOIN pay b ON a.id = b.id;", explanation: "JOIN combines rows from two or more tables." },
-        { text: "CREATE TABLE users (\n    id INT PRIMARY KEY\n);", explanation: "CREATE TABLE defines a new table structure." },
-        { text: "ALTER TABLE users\nADD COLUMN email VARCHAR(255);", explanation: "ALTER TABLE changes an existing table schema." },
-        { text: "SELECT name FROM users\nORDER BY created_at DESC LIMIT 10;", explanation: "ORDER BY sorts the result, LIMIT restricts the row count." },
-        { text: "BEGIN;\nUPDATE accounts SET bal = 0;\nCOMMIT;", explanation: "Transactions ensure multiple operations succeed or fail together." }
+        p("SELECT * FROM users", "Retrieving data."),
+        p("INSERT INTO logs VALUES (1)", "Adding records."),
+        p("UPDATE users SET name='Zen'", "Modifying data."),
+        p("DELETE FROM sessions", "Removing data."),
+        p("SELECT count(*) FROM emp", "Aggregation."),
+        p("GROUP BY department", "Grouping data."),
+        p("JOIN roles ON u.id = r.id", "Table joins."),
+        p("ORDER BY date DESC", "Sorting results."),
+        p("CREATE TABLE test (id INT)", "Schema creation."),
+        p("BEGIN; ROLLBACK;", "Transactions.")
     ],
     "TypeScript": [
-        { text: "let age: number = 25;", explanation: "Basic type annotation in TypeScript." },
-        { text: "interface User {\n    id: number;\n    name: string;\n}", explanation: "Interfaces define the shape and types of an object." },
-        { text: "function log<T>(arg: T): T {\n    return arg;\n}", explanation: "Generics allow writing reusable, type-safe functions." },
-        { text: "type Status = 'pending' | 'active' | 'done';", explanation: "Union types restrict a value to a specific set of strings or types." },
-        { text: "class Point {\n    constructor(public x: number) {}\n}", explanation: "TS allows shorthand property initialization in constructors." },
-        { text: "let value: unknown;\nif (typeof value === 'string') {}", explanation: "Type guards narrow down the type of a variable within a block." },
-        { text: "const ids: number[] = [1, 2, 3];", explanation: "Type annotations define the expected data type of an array." },
-        { text: "function print(msg?: string) {}", explanation: "The '?' marks a parameter or property as optional." },
-        { text: "type ReadonlyUser = Readonly<User>;", explanation: "Utility types like Readonly modify existing types globally." },
-        { text: "const user = obj as User;", explanation: "Type assertions override the compiler's inferred type." }
+        p("let n: number = 1", "Type annotation."),
+        p("interface User { id: id }", "Interfaces."),
+        p("type Status = 'ok' | 'err'", "Union types."),
+        p("function log<T>(a: T): T", "Generics."),
+        p("enum Color { Red, Blue }", "Enums."),
+        p("const x = val as string", "Type assertion."),
+        p("readonly name: string", "Readonly modifier."),
+        p("namespace App { }", "Namespaces."),
+        p("Pick<User, 'id'>", "Utility types."),
+        p("abstract class Base { }", "Abstract classes.")
     ],
     "Java": [
-        { text: "int x = 10;", explanation: "Variable declaration in Java." },
-        { text: "public class Main {\n    public static void main(String[] args) {}\n}", explanation: "Every Java application begins with a main method." },
-        { text: "ArrayList<String> list = new ArrayList<>();", explanation: "ArrayList is a dynamic array implementation in Java." },
-        { text: "try {\n    doWork();\n} catch (Exception e) {\n    e.printStackTrace();\n}", explanation: "Try-catch blocks handle runtime exceptions gracefully." },
-        { text: "public interface Animal {\n    void makeSound();\n}", explanation: "Interfaces define abstract methods for classes to implement." },
-        { text: "Stream<String> s = list.stream()\n    .filter(x -> x.startsWith(\"a\"));", explanation: "Streams provide functional-style operations on collections." },
-        { text: "String[] arr = new String[5];", explanation: "Arrays in Java have a fixed size upon initialization." },
-        { text: "public static final double PI = 3.14159;", explanation: "static final creates a class-level constant." },
-        { text: "Thread t = new Thread(() -> runTask());\nt.start();", explanation: "Threads allow concurrent execution of code." },
-        { text: "public MyClass() {\n    this.value = 1;\n}", explanation: "Constructors initialize newly created objects." }
+        p("public class Main { }", "Class structure."),
+        p("int[] arr = new int[5]", "Arrays."),
+        p("ArrayList<String> l = new ArrayList<>()", "Collections."),
+        p("System.out.println('Hi')", "Standard output."),
+        p("public static void main", "Main method."),
+        p("interface Animal { }", "Interfaces."),
+        p("try { } catch (Exception e)", "Exceptions."),
+        p("@Override", "Annotations."),
+        p("Thread t = new Thread()", "Multithreading."),
+        p("Map<K, V> m = new HashMap<>()", "Hash maps.")
     ],
     "HTML/CSS": [
-        { text: "<p>Hello</p>", explanation: "Paragraph tags contain text." },
-        { text: "<div class='container'>\n    <p>Focus!</p>\n</div>", explanation: "HTML tags define the semantic structure of a webpage." },
-        { text: ".neon {\n    color: #00f3ff;\n    text-shadow: 0 0 10px;\n}", explanation: "CSS selectors apply visual styles to HTML elements." },
-        { text: "@media (max-width: 600px) {\n    body { padding: 10px; }\n}", explanation: "Media queries enable responsive design for mobile devices." },
-        { text: "display: grid;\ngrid-template-columns: 1fr 1fr;", explanation: "CSS Grid is a powerful 2D layout system." },
-        { text: "display: flex;\njustify-content: center;\nalign-items: center;", explanation: "Flexbox aligns and distributes space among items in a container." },
-        { text: "box-sizing: border-box;", explanation: "border-box includes padding and border in the element's total width." },
-        { text: "position: absolute;\ntop: 50%;\ntransform: translateY(-50%);", explanation: "Absolute positioning places an element relative to its closest positioned ancestor." },
-        { text: "transition: all 0.3s ease-in-out;", explanation: "Transitions provide smooth animations for property changes." },
-        { text: "<meta name=\"viewport\" content=\"width=device-width\" />", explanation: "The viewport meta tag ensures proper scaling on mobile devices." }
+        p("<div class='box'></div>", "HTML elements."),
+        p(".box { color: red; }", "CSS selectors."),
+        p("display: flex;", "Flexbox."),
+        p("grid-template-columns: 1fr", "CSS Grid."),
+        p("@media (max-width: 600px)", "Media queries."),
+        p("position: relative;", "Positioning."),
+        p("box-sizing: border-box;", "Box model."),
+        p("animation: fade 1s;", "Animations."),
+        p("<meta name='viewport' content='...'>", "Viewport settings."),
+        p("opacity: 0.5;", "Transparency.")
+    ],
+    "C++": [
+        p("#include <iostream>", "Headers."),
+        p("int main() { return 0; }", "Entry point."),
+        p("std::vector<int> v;", "Vectors."),
+        p("int* p = &x;", "Pointers."),
+        p("class MyClass { public: };", "Classes."),
+        p("cout << 'Hello' << endl;", "I/O stream."),
+        p("template <typename T>", "Templates."),
+        p("namespace fs = std::filesystem;", "Namespaces."),
+        p("auto lambda = [](){};", "Lambdas."),
+        p("throw std::runtime_error('');", "Exceptions.")
+    ],
+    "Rust": [
+        p("fn main() { }", "Main function."),
+        p("let mut x = 5;", "Mutability."),
+        p("println!('Hello');", "Macros."),
+        p("match val { 1 => (), _ => () }", "Pattern matching."),
+        p("let v = vec![1, 2, 3];", "Vectors."),
+        p("struct User { name: String }", "Structs."),
+        p("impl User { fn new() {} }", "Implementations."),
+        p("enum Result<T, E> { }", "Enums."),
+        p("pub use self::module;", "Visibility."),
+        p("unwrap_or_default()", "Option handling.")
+    ],
+    "Go": [
+        p("package main", "Package declaration."),
+        p("import 'fmt'", "Imports."),
+        p("func main() { }", "Functions."),
+        p("go doWork()", "Goroutines."),
+        p("ch := make(chan int)", "Channels."),
+        p("if err != nil { }", "Error checking."),
+        p("type User struct { }", "Structs."),
+        p("defer close(f)", "Deferred calls."),
+        p("slice := []int{1, 2}", "Slices."),
+        p("map[string]int", "Maps.")
+    ],
+    "Node.js": [
+        p("require('fs')", "CommonJS."),
+        p("module.exports = { }", "Exports."),
+        p("process.env.PORT", "Environment."),
+        p("app.get('/', (q, r) => {})", "Routing."),
+        p("next()", "Middleware."),
+        p("Buffer.from('hi')", "Buffers."),
+        p("EventEmitter", "Events."),
+        p("Stream", "Streams."),
+        p("npm install", "Package management."),
+        p("path.join(__dirname, 'f')", "Path handling.")
+    ],
+    "Linux Bash": [
+        p("chmod +x script.sh", "Permissions."),
+        p("ls -la | grep '.ts'", "Piping."),
+        p("export PATH=$PATH:/dir", "Environment."),
+        p("find . -name '*.js'", "Searching."),
+        p("alias gs='git status'", "Aliases."),
+        p("if [ -f file ]; then", "Conditionals."),
+        p("tar -czf arch.tar.gz .", "Archiving."),
+        p("curl -X GET url", "Networking."),
+        p("sudo apt update", "Package manager."),
+        p("cat /etc/passwd", "Reading files.")
+    ],
+    "Docker": [
+        p("FROM node:alpine", "Base images."),
+        p("WORKDIR /app", "Working dir."),
+        p("COPY . .", "Copying files."),
+        p("RUN npm install", "Build steps."),
+        p("CMD ['npm', 'start']", "Runtime command."),
+        p("EXPOSE 3000", "Ports."),
+        p("ENV NODE_ENV=prod", "Env vars."),
+        p("docker build -t img .", "Building."),
+        p("docker-compose up", "Orchestration."),
+        p("docker ps", "Status.")
+    ],
+    "Git": [
+        p("git init", "Initialization."),
+        p("git add .", "Staging."),
+        p("git commit -m 'msg'", "Committing."),
+        p("git push origin main", "Pushing."),
+        p("git checkout -b branch", "Branching."),
+        p("git merge main", "Merging."),
+        p("git rebase main", "Rebase."),
+        p("git pull --rebase", "Pulling."),
+        p("git stash pop", "Stashing."),
+        p("git log --oneline", "History.")
+    ],
+    "CyberSecurity": [
+        p("<script>alert(1)</script>", "XSS."),
+        p("' OR '1'='1", "SQL Injection."),
+        p("bcrypt.hash(pwd, 10)", "Hashing."),
+        p("nmap -sS target", "Port scanning."),
+        p("JWT token validation", "Authentication."),
+        p("Same-Origin Policy", "Web security."),
+        p("CSRF tokens", "Request forgery."),
+        p("Salting passwords", "Entropy."),
+        p("SSL/TLS handshake", "Encryption."),
+        p("Broken Access Control", "OWASP Top 10.")
+    ],
+    "Machine Learning": [
+        p("model.fit(X, y)", "Training."),
+        p("Dense(64, activation='relu')", "Layers."),
+        p("optimizer='adam'", "Optimization."),
+        p("Epochs", "Iterations."),
+        p("Loss function", "Objective."),
+        p("Overfitting", "Generalization."),
+        p("Linear Regression", "Regression."),
+        p("Decision Trees", "Classification."),
+        p("Neural Networks", "Deep learning."),
+        p("K-Means", "Clustering.")
+    ],
+    "Data Science": [
+        p("df.head()", "Data frames."),
+        p("pd.read_csv('f.csv')", "Data loading."),
+        p("df.dropna()", "Cleaning."),
+        p("plt.plot(x, y)", "Visualization."),
+        p("StandardScaler()", "Scaling."),
+        p("Train-test split", "Validation."),
+        p("Correlation matrix", "Statistics."),
+        p("P-value", "Hypothesis testing."),
+        p("Outliers", "Anomalies."),
+        p("Mean, Median, Mode", "Central tendency.")
+    ],
+    "Regex": [
+        p("/^[a-z]+$/", "Start/End."),
+        p("/\\d{3}/", "Digits."),
+        p("/\\s+/", "Whitespace."),
+        p("/(abc|def)/", "Grouping."),
+        p("/[^0-9]/", "Negation."),
+        p("/[a-zA-Z]/", "Ranges."),
+        p("/\\w+/", "Word characters."),
+        p("/(.)\\1/", "Backreferences."),
+        p("/(?=.*[A-Z])/", "Lookahead."),
+        p("/[a-z]+/gi", "Flags.")
+    ],
+    "Quantum Computing": [
+        p("qc = QuantumCircuit(2)", "Circuits."),
+        p("qc.h(0)", "Superposition."),
+        p("qc.cx(0, 1)", "Entanglement."),
+        p("qc.measure_all()", "Measurement."),
+        p("Qubit", "Quantum bit."),
+        p("Bloch Sphere", "Visualization."),
+        p("Quantum Gates", "Operations."),
+        p("Superposition", "Linear combo."),
+        p("Interference", "Wave property."),
+        p("Algorithms (Shor/Grover)", "Quantum speedup.")
+    ],
+    "Astronomy": [
+        p("E = mc^2", "Relativity."),
+        p("Light year", "Distance."),
+        p("Black hole", "Singularity."),
+        p("Redshift", "Cosmology."),
+        p("Exoplanets", "Planetary systems."),
+        p("Milky Way", "Galaxies."),
+        p("Supernova", "Star death."),
+        p("Dark Matter", "Invisible mass."),
+        p("Nebula", "Gas clouds."),
+        p("Event Horizon", "Boundary.")
+    ],
+    "Tech Trivia": [
+        p("First bug was a moth.", "History."),
+        p("1024 bytes = 1 KB", "Units."),
+        p("CERN web 1991", "Internet."),
+        p("Viking King Bluetooth", "Etymology."),
+        p("First mouse was wood.", "Hardware."),
+        p("Python 1991", "Origins."),
+        p("ASCII characters", "Encoding."),
+        p("Moore's Law", "Transistors."),
+        p("Ada Lovelace", "First programmer."),
+        p("Eniac", "First computer.")
     ]
 };
 
-// Fallback for remaining subjects
-const fallbackSubjects = ["C++", "Rust", "Go", "Node.js", "Linux Bash", "Docker", "Git", "CyberSecurity", "Machine Learning", "Data Science", "Regex", "Quantum Computing", "Astronomy", "Tech Trivia"];
-
-fallbackSubjects.forEach(sub => {
-    if(!SKILL_DATA[sub]) {
-        SKILL_DATA[sub] = [
-            { text: `Init ${sub}`, explanation: "System starting." },
-            { text: `Welcome to ${sub} training.`, explanation: `Initializing ${sub} neural patterns...` },
-            { text: "Focus your mind.", explanation: "High focus yields optimal learning rates." },
-            { text: "Maintain the flow state.", explanation: "Errors break the cognitive sync." },
-            { text: "Almost complete.", explanation: "Your WPM is directly tied to clarity." },
-            { text: "Knowledge acquired.", explanation: "System updating with new patterns." }
-        ];
-    }
-});
-
-// Helper for Custom Data Injector
 export function parseCustomData(rawData: string): SkillSnippet[] {
     const lines = rawData.split('\n').filter(line => line.trim().length > 0);
     const snippets: SkillSnippet[] = [];
-    
-    // Group lines into small blocks (e.g. 1 or 2 lines)
     for (let i = 0; i < lines.length; i += 2) {
         let text = lines[i];
-        if (i + 1 < lines.length) {
-            text += '\n' + lines[i+1];
-        }
-        snippets.push({
-            text: text,
-            explanation: "Custom Neural Input Acquired."
-        });
+        if (i + 1 < lines.length) text += '\n' + lines[i+1];
+        snippets.push({ text: text.trimEnd(), explanation: "Custom Input Acquired." });
     }
-
-    if(snippets.length === 0) {
-        snippets.push({ text: "Custom Data Error", explanation: "No valid text provided." });
-    }
-
+    if(snippets.length === 0) snippets.push({ text: "Error", explanation: "Empty." });
     return snippets;
 }
