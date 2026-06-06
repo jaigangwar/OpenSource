@@ -319,58 +319,99 @@
             }
         });
 
-        // 3D Neural Web Background (Full-Screen Immersive)
+        // 3D Starfield / Interstellar Vortex (Full-Screen Immersive)
         const init3D = () => {
-            const c = document.getElementById('bg-canvas'), s = new THREE.Scene(), cam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
-            cam.position.z = 800; 
+            const c = document.getElementById('bg-canvas');
+            const s = new THREE.Scene();
+            const cam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000);
+            cam.position.z = 1000; 
+
             const r = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true });
-            r.setSize(window.innerWidth, window.innerHeight); r.setPixelRatio(window.devicePixelRatio);
+            r.setSize(window.innerWidth, window.innerHeight);
+            r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             
-            // Create a vast volume of points
-            const geo = new THREE.BufferGeometry(), count = 2500;
+            // Create a high-density vortex of stars
+            const count = 4000;
             const pos = new Float32Array(count * 3);
             const cols = new Float32Array(count * 3);
-            const c1 = new THREE.Color(0x00f3ff), c2 = new THREE.Color(0xff00ff);
+            const sizes = new Float32Array(count);
             
-            for(let i=0; i<count*3; i+=3) {
-                // Large spread to fill entire screen
-                pos[i] = (Math.random() - 0.5) * 3000;
-                pos[i+1] = (Math.random() - 0.5) * 3000;
-                pos[i+2] = (Math.random() - 0.5) * 3000;
+            const c1 = new THREE.Color(0x00f3ff); // Cyan
+            const c2 = new THREE.Color(0xff00ff); // Magenta
+            
+            for(let i=0; i<count; i++) {
+                const i3 = i * 3;
+                // Distribute points in a huge cylindrical/tunnel volume
+                pos[i3] = (Math.random() - 0.5) * 3000;
+                pos[i3+1] = (Math.random() - 0.5) * 3000;
+                pos[i3+2] = (Math.random() - 0.5) * 2000;
                 
                 const m = c1.clone().lerp(c2, Math.random());
-                cols[i]=m.r; cols[i+1]=m.g; cols[i+2]=m.b;
+                cols[i3] = m.r; cols[i3+1] = m.g; cols[i3+2] = m.b;
+                sizes[i] = Math.random() * 3 + 1;
             }
             
+            const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
             geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
             
-            const mat = new THREE.PointsMaterial({ size: 4, vertexColors: true, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
-            const points = new THREE.Points(geo, mat); s.add(points);
+            const mat = new THREE.PointsMaterial({ 
+                size: 2, 
+                vertexColors: true, 
+                transparent: true, 
+                opacity: 0.8, 
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
             
-            let mx=0, my=0; document.addEventListener('mousemove', e => { mx=(e.clientX - window.innerWidth/2)*0.4; my=(e.clientY - window.innerHeight/2)*0.4; });
+            const points = new THREE.Points(geo, mat);
+            s.add(points);
+            
+            // Mouse Parallax Sensitivity
+            let mx=0, my=0;
+            document.addEventListener('mousemove', e => {
+                mx = (e.clientX - window.innerWidth / 2) * 0.1;
+                my = (e.clientY - window.innerHeight / 2) * 0.1;
+            });
             
             const anim = () => {
                 requestAnimationFrame(anim);
-                // Continuous slow rotation + flow state speed increase
-                const rotSpeed = document.body.classList.contains('flow-state-active') ? 0.005 : 0.001;
-                points.rotation.y += rotSpeed;
-                points.rotation.x += rotSpeed * 0.5;
                 
-                // Move through field
-                points.position.z += document.body.classList.contains('flow-state-active') ? 10 : 1.5;
-                if(points.position.z > 1500) points.position.z = -1500;
+                // Rotation + Warp Movement
+                const isFlow = document.body.classList.contains('flow-state-active');
+                const speed = isFlow ? 30 : 4;
+                const rotationSpeed = isFlow ? 0.01 : 0.002;
 
-                // Mouse influence
+                points.rotation.z += rotationSpeed;
+
+                // Move stars towards the camera
+                const positions = geo.attributes.position.array;
+                for(let i=0; i<count; i++) {
+                    const i3 = i * 3;
+                    positions[i3+2] += speed; // Move forward on Z axis
+
+                    // Reset star if it passes the camera
+                    if(positions[i3+2] > 1000) {
+                        positions[i3+2] = -1000;
+                        // Randomize X/Y to keep it fresh
+                        positions[i3] = (Math.random() - 0.5) * 3000;
+                        positions[i3+1] = (Math.random() - 0.5) * 3000;
+                    }
+                }
+                geo.attributes.position.needsUpdate = true;
+
+                // Smooth Camera tracking
                 cam.position.x += (mx - cam.position.x) * 0.05;
                 cam.position.y += (-my - cam.position.y) * 0.05;
-                cam.lookAt(s.position);
+                cam.lookAt(0, 0, 0); // Always focus on the mathematical center
                 
                 r.render(s, cam);
-            }; anim();
+            };
+            anim();
             
             window.addEventListener('resize', () => { 
-                cam.aspect = window.innerWidth/window.innerHeight; cam.updateProjectionMatrix(); 
+                cam.aspect = window.innerWidth / window.innerHeight;
+                cam.updateProjectionMatrix(); 
                 r.setSize(window.innerWidth, window.innerHeight); 
             });
         }; window.onload = init3D;

@@ -10,7 +10,6 @@ export class MainScene extends Phaser.Scene {
     private focusLevel = 100;
     
     // UI Elements (Phaser)
-    private tunnelGraphics!: Phaser.GameObjects.Graphics;
     private flowParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
     private explosionParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
     
@@ -78,12 +77,12 @@ export class MainScene extends Phaser.Scene {
     }
 
     create() {
-        this.tunnelGraphics = this.add.graphics();
-        
+        // Flow State Particles
         this.flowParticles = this.add.particles(0, 0, 'spark', {
             speed: 200, scale: { start: 0.5, end: 0 }, blendMode: 'ADD', lifespan: 800, tint: 0xffaa00, emitting: false
         });
 
+        // Snippet Explosion Particles
         this.explosionParticles = this.add.particles(0, 0, 'flare', {
             speed: { min: 200, max: 600 }, angle: { min: 0, max: 360 }, scale: { start: 0.8, end: 0 },
             blendMode: 'ADD', lifespan: 1000, gravityY: 300, emitting: false
@@ -136,11 +135,29 @@ export class MainScene extends Phaser.Scene {
         });
     }
 
+    private playFlowEntrySound() {
+        if (!this.audioCtx) return;
+        const osc = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, this.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, this.audioCtx.currentTime + 0.5);
+        gainNode.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 1.5);
+        osc.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 1.5);
+    }
+
     private speakExplanation(text: string) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.rate = 1.1; msg.pitch = 0.9;
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
+            if (englishVoice) msg.voice = englishVoice;
             window.speechSynthesis.speak(msg);
         }
     }
@@ -193,7 +210,7 @@ export class MainScene extends Phaser.Scene {
             } else {
                 // Ignore redundant spaces if already indented
                 if (charToMatch === ' ' && expectedChar !== ' ' && 
-                   (this.typedText.endsWith(' ') || this.typedText.endsWith('\n'))) {
+                   (this.typedText.endsWith(' ') || this.typedText.endsWith('\n') || this.typedText.endsWith('\t'))) {
                     return;
                 }
 
@@ -259,7 +276,7 @@ export class MainScene extends Phaser.Scene {
 
     update() {
         if (this.isFinished) return;
-        this.drawTunnel();
+        
         const now = Date.now();
         const elapsedMinutes = (now - this.startTime) / 60000;
         const effectiveMinutes = Math.max(0.1, elapsedMinutes); 
@@ -274,7 +291,8 @@ export class MainScene extends Phaser.Scene {
                 this.isFlowState = true;
                 document.body.classList.add('flow-state-active');
                 document.getElementById('flow-state-indicator')!.style.opacity = '1';
-                this.cameras.main.flash(500, 255, 170, 0);
+                this.cameras.main.flash(500, 255, 170, 0); // Gold flash on entry
+                this.playFlowEntrySound();
             }
         } else if (this.isFlowState) {
             this.isFlowState = false;
@@ -294,18 +312,6 @@ export class MainScene extends Phaser.Scene {
             }
         }
         (window as any).updateStats({ wpm, accuracy, progress, streak: this.currentStreak, maxStreak: this.maxStreak });
-    }
-
-    private drawTunnel() {
-        this.tunnelGraphics.clear();
-        const time = this.time.now * (this.isFlowState ? 0.008 : 0.002);
-        const color = this.isFlowState ? 0xffaa00 : 0x00f3ff;
-        for (let i = 0; i < 6; i++) {
-            const size = ((time + i * 0.3) % 2) * 500;
-            const alpha = 1 - (size / 1000);
-            this.tunnelGraphics.lineStyle(this.isFlowState ? 6 : 2, color, alpha);
-            this.tunnelGraphics.strokeRect(400 - size, 300 - size * 0.75, size * 2, size * 1.5);
-        }
     }
 
     setFocusLevel(level: number) {
