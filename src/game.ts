@@ -28,28 +28,47 @@ export class MainScene extends Phaser.Scene {
     private isWaitingForNext = false;
     private isFlowState = false;
 
-    // Audio Context for ASMR
-    private audioCtx!: AudioContext;
+    // Audio Context for ASMR (Singleton-like)
+    private static audioCtx: AudioContext | null = null;
 
     constructor() {
         super('MainScene');
+    }
+
+    private getAudioCtx(): AudioContext | null {
+        if (!MainScene.audioCtx) {
+            try {
+                const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioContextClass) {
+                    MainScene.audioCtx = new AudioContextClass();
+                }
+            } catch (e) {
+                console.error("Failed to initialize AudioContext", e);
+            }
+        }
+        if (MainScene.audioCtx && MainScene.audioCtx.state === 'suspended') {
+            MainScene.audioCtx.resume();
+        }
+        return MainScene.audioCtx;
     }
 
     init(data: { skill: string, isNeuralMode: boolean, customData?: SkillSnippet[] }) {
         this.skill = data.skill || 'Python';
         this.isNeuralMode = data.isNeuralMode !== undefined ? data.isNeuralMode : true;
         
-        if (data.customData && data.customData.length > 0) {
-            this.snippets = data.customData;
-        } else {
-            this.snippets = SKILL_DATA[this.skill] || SKILL_DATA["Python"];
-        }
+        let rawSnippets = (data.customData && data.customData.length > 0) 
+            ? data.customData 
+            : (SKILL_DATA[this.skill] || SKILL_DATA["Python"]);
 
         // HEAVY SANITIZATION: Remove \r and trailing whitespace which breaks matching
-        this.snippets = this.snippets.map(s => ({
-            text: s.text.replace(/\r/g, '').trimEnd(),
-            explanation: s.explanation
-        }));
+        this.snippets = rawSnippets.map(s => ({
+            text: (s.text || "").replace(/\r/g, '').trimEnd(),
+            explanation: s.explanation || "No explanation available."
+        })).filter(s => s.text.length > 0);
+
+        if (this.snippets.length === 0) {
+            this.snippets = [{ text: "Error", explanation: "No snippets found for this skill." }];
+        }
 
         this.currentSnippetIndex = 0;
         this.typedText = "";
@@ -65,9 +84,7 @@ export class MainScene extends Phaser.Scene {
         this.codeHTML = document.getElementById('code-text');
         this.explHTML = document.getElementById('explanation-text');
         
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        this.audioCtx = new AudioContextClass();
-        if(this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        this.getAudioCtx();
     }
 
     preload() {
@@ -90,75 +107,89 @@ export class MainScene extends Phaser.Scene {
         
         this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
             if (this.isFinished || this.isWaitingForNext) return;
-            this.handleInput(event);
+            try {
+                this.handleInput(event);
+            } catch (e) {
+                console.error("Input handling error:", e);
+            }
         });
 
         this.updateSnippet();
     }
 
     private playASMRClick() {
-        if (!this.audioCtx) return;
-        const osc = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
+        const ctx = this.getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(700 + Math.random() * 300, this.audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, this.audioCtx.currentTime + 0.05);
-        gainNode.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.05);
-        osc.connect(gainNode); gainNode.connect(this.audioCtx.destination);
-        osc.start(); osc.stop(this.audioCtx.currentTime + 0.05);
+        osc.frequency.setValueAtTime(700 + Math.random() * 300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.connect(gainNode); gainNode.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.05);
     }
 
     private playErrorGlitch() {
-        if (!this.audioCtx) return;
-        const osc = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
+        const ctx = this.getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, this.audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(80, this.audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.2);
-        osc.connect(gainNode); gainNode.connect(this.audioCtx.destination);
-        osc.start(); osc.stop(this.audioCtx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.connect(gainNode); gainNode.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.2);
     }
 
     private playEpicChime() {
-        if (!this.audioCtx) return;
+        const ctx = this.getAudioCtx();
+        if (!ctx) return;
         [440, 554, 659, 880].forEach((freq, index) => {
-            const osc = this.audioCtx.createOscillator(); const gainNode = this.audioCtx.createGain();
+            const osc = ctx.createOscillator(); const gainNode = ctx.createGain();
             osc.type = 'sine'; osc.frequency.value = freq;
-            gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime + index * 0.05);
-            gainNode.gain.linearRampToValueAtTime(0.1, this.audioCtx.currentTime + index * 0.05 + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 1.0);
-            osc.connect(gainNode); gainNode.connect(this.audioCtx.destination);
-            osc.start(this.audioCtx.currentTime + index * 0.05); osc.stop(this.audioCtx.currentTime + 1.0);
+            gainNode.gain.setValueAtTime(0, ctx.currentTime + index * 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.1, ctx.currentTime + index * 0.05 + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+            osc.connect(gainNode); gainNode.connect(ctx.destination);
+            osc.start(ctx.currentTime + index * 0.05); osc.stop(ctx.currentTime + 1.0);
         });
     }
 
     private playFlowEntrySound() {
-        if (!this.audioCtx) return;
-        const osc = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
+        const ctx = this.getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, this.audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(40, this.audioCtx.currentTime + 0.5);
-        gainNode.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 1.5);
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.5);
+        gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
         osc.connect(gainNode);
-        gainNode.connect(this.audioCtx.destination);
+        gainNode.connect(ctx.destination);
         osc.start();
-        osc.stop(this.audioCtx.currentTime + 1.5);
+        osc.stop(ctx.currentTime + 1.5);
     }
 
     private speakExplanation(text: string) {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.rate = 1.1; msg.pitch = 0.9;
-            const voices = window.speechSynthesis.getVoices();
-            const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
-            if (englishVoice) msg.voice = englishVoice;
-            window.speechSynthesis.speak(msg);
+            try {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.rate = 1.1; msg.pitch = 0.9;
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
+                    if (englishVoice) msg.voice = englishVoice;
+                }
+                window.speechSynthesis.speak(msg);
+            } catch (e) {
+                console.warn("Speech synthesis failed", e);
+            }
         }
     }
 
@@ -173,9 +204,12 @@ export class MainScene extends Phaser.Scene {
     }
 
     private handleInput(event: KeyboardEvent) {
-        if (event.metaKey || (event.ctrlKey && !event.altKey)) return;
+        if (this.isFinished || this.isWaitingForNext) return;
         
-        const target = this.snippets[this.currentSnippetIndex].text;
+        const currentSnippet = this.snippets[this.currentSnippetIndex];
+        if (!currentSnippet) return;
+
+        const target = currentSnippet.text;
         const key = event.key;
 
         if (key.length === 1 || key === 'Enter') { 
@@ -201,7 +235,8 @@ export class MainScene extends Phaser.Scene {
                 }
 
                 this.playASMRClick();
-                this.cameras.main.zoomTo(1.02, 30, 'Linear', true, (cam, prog) => { if (prog === 1) cam.zoomTo(1, 30); });
+                (window as any).triggerPulse?.('correct');
+                this.cameras.main.zoomTo(1.02, 30, 'Linear', true, (cam: any, prog: any) => { if (prog === 1) cam.zoomTo(1, 30); });
 
                 if (this.isFlowState) {
                     this.flowParticles.emitParticleAt(Phaser.Math.Between(100, 700), Phaser.Math.Between(200, 400));
@@ -235,17 +270,26 @@ export class MainScene extends Phaser.Scene {
     }
 
     private completeSnippet() {
+        if (this.isWaitingForNext) return;
         this.isWaitingForNext = true; // LOCK INPUT
-        const explanation = this.snippets[this.currentSnippetIndex].explanation;
+        
+        const currentSnippet = this.snippets[this.currentSnippetIndex];
+        if (!currentSnippet) {
+            this.updateSnippet();
+            return;
+        }
+
+        const explanation = currentSnippet.explanation;
         
         if (this.explHTML) {
             this.explHTML.innerText = explanation;
             this.explHTML.style.opacity = '1';
         }
         
-        this.explosionParticles.emitParticleAt(400, 300, 50);
+        this.explosionParticles.emitParticleAt(this.cameras.main.centerX, this.cameras.main.centerY, 50);
         this.cameras.main.flash(300, 255, 255, 255);
         this.playEpicChime();
+        (window as any).triggerPulse?.('complete');
         this.speakExplanation(explanation);
         
         // Faster delay for better gameplay flow (2.5 seconds)
@@ -261,9 +305,10 @@ export class MainScene extends Phaser.Scene {
     }
 
     private renderText() {
-        const target = this.snippets[this.currentSnippetIndex].text;
-        if (!this.codeHTML) return;
-
+        const currentSnippet = this.snippets[this.currentSnippetIndex];
+        if (!currentSnippet || !this.codeHTML) return;
+        
+        const target = currentSnippet.text;
         const typed = target.substring(0, this.typedText.length);
         let cursorChar = target.substring(this.typedText.length, this.typedText.length + 1);
         const remaining = target.substring(this.typedText.length + 1);
@@ -277,41 +322,49 @@ export class MainScene extends Phaser.Scene {
     update() {
         if (this.isFinished) return;
         
-        const now = Date.now();
-        const elapsedMinutes = (now - this.startTime) / 60000;
-        const effectiveMinutes = Math.max(0.1, elapsedMinutes); 
-        const wpm = Math.round((this.totalChars / 5) / effectiveMinutes) || 0;
-        const accuracy = Math.round(((this.totalChars - this.errors) / Math.max(1, this.totalChars)) * 100);
-        const progress = Math.round((this.currentSnippetIndex / this.snippets.length) * 100);
+        try {
+            const now = Date.now();
+            const elapsedMinutes = (now - this.startTime) / 60000;
+            const effectiveMinutes = Math.max(0.1, elapsedMinutes); 
+            const wpm = Math.round((this.totalChars / 5) / effectiveMinutes) || 0;
+            const accuracy = Math.round(((this.totalChars - this.errors) / Math.max(1, this.totalChars)) * 100);
+            
+            const snippetsLen = this.snippets.length || 1;
+            const progress = Math.round((this.currentSnippetIndex / snippetsLen) * 100);
 
-        if (!this.isNeuralMode) this.focusLevel = 100;
+            if (!this.isNeuralMode) this.focusLevel = 100;
 
-        if (this.focusLevel >= 90 && this.currentStreak > 20) {
-            if (!this.isFlowState) {
-                this.isFlowState = true;
-                document.body.classList.add('flow-state-active');
-                document.getElementById('flow-state-indicator')!.style.opacity = '1';
-                this.cameras.main.flash(500, 255, 170, 0); // Gold flash on entry
-                this.playFlowEntrySound();
+            if (this.focusLevel >= 90 && this.currentStreak > 20) {
+                if (!this.isFlowState) {
+                    this.isFlowState = true;
+                    document.body.classList.add('flow-state-active');
+                    const flowIndicator = document.getElementById('flow-state-indicator');
+                    if (flowIndicator) flowIndicator.style.opacity = '1';
+                    this.cameras.main.flash(500, 255, 170, 0); // Gold flash on entry
+                    this.playFlowEntrySound();
+                }
+            } else if (this.isFlowState) {
+                this.isFlowState = false;
+                document.body.classList.remove('flow-state-active');
+                const flowIndicator = document.getElementById('flow-state-indicator');
+                if (flowIndicator) flowIndicator.style.opacity = '0';
             }
-        } else if (this.isFlowState) {
-            this.isFlowState = false;
-            document.body.classList.remove('flow-state-active');
-            document.getElementById('flow-state-indicator')!.style.opacity = '0';
-        }
 
-        if (this.isNeuralMode && this.codeOverlay) {
-            if (!this.isFlowState && this.focusLevel < 50) {
-                const blurAmount = Math.max(0, 5 - (this.focusLevel / 10));
-                this.codeOverlay.style.filter = `blur(${blurAmount}px)`;
-                this.codeOverlay.style.opacity = `${0.3 + (this.focusLevel / 100)}`;
-                this.cameras.main.shake(100, 0.001 * ((50 - this.focusLevel) / 10));
-            } else {
-                this.codeOverlay.style.filter = `none`;
-                this.codeOverlay.style.opacity = `1`;
+            if (this.isNeuralMode && this.codeOverlay) {
+                if (!this.isFlowState && this.focusLevel < 50) {
+                    const blurAmount = Math.max(0, 5 - (this.focusLevel / 10));
+                    this.codeOverlay.style.filter = `blur(${blurAmount}px)`;
+                    this.codeOverlay.style.opacity = `${0.3 + (this.focusLevel / 100)}`;
+                    this.cameras.main.shake(100, 0.001 * ((50 - this.focusLevel) / 10));
+                } else {
+                    this.codeOverlay.style.filter = `none`;
+                    this.codeOverlay.style.opacity = `1`;
+                }
             }
+            (window as any).updateStats({ wpm, accuracy, progress, streak: this.currentStreak, maxStreak: this.maxStreak });
+        } catch (e) {
+            console.error("Update loop error:", e);
         }
-        (window as any).updateStats({ wpm, accuracy, progress, streak: this.currentStreak, maxStreak: this.maxStreak });
     }
 
     setFocusLevel(level: number) {

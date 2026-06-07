@@ -54,6 +54,14 @@ document.addEventListener('customDataInjected', (e: any) => {
 (window as any).startApp = async (isNeuralMode: boolean, skill: string) => {
     currentNeuralMode = isNeuralMode;
 
+    if (game) {
+        try {
+            game.destroy(true);
+        } catch (e) {
+            console.warn("Error destroying previous game instance", e);
+        }
+    }
+
     if (isNeuralMode) {
         try {
             webcamElement.style.display = 'block';
@@ -77,11 +85,13 @@ document.addEventListener('customDataInjected', (e: any) => {
     
     // Pass skill and mode to scene once it's ready
     game.events.once('ready', () => {
-        game.scene.start('MainScene', { 
-            skill, 
-            isNeuralMode: currentNeuralMode,
-            customData: skill === "Custom Data" ? customSkillData : null
-        });
+        if (game.scene.isActive('MainScene')) {
+            game.scene.start('MainScene', { 
+                skill, 
+                isNeuralMode: currentNeuralMode,
+                customData: skill === "Custom Data" ? customSkillData : null
+            });
+        }
     });
 
     startMonitoring();
@@ -89,14 +99,21 @@ document.addEventListener('customDataInjected', (e: any) => {
 
 
 function startMonitoring() {
+  if (sessionInterval) clearInterval(sessionInterval);
   focusHistory = [];
   wpmHistory = [];
   
   sessionInterval = setInterval(() => {
+    if (!game) return;
+    
     let currentFocus = 100;
 
     if (currentNeuralMode && tracker) {
-        currentFocus = tracker.calculateFocus();
+        try {
+            currentFocus = tracker.calculateFocus();
+        } catch (e) {
+            console.error("Tracker error:", e);
+        }
     }
 
     focusHistory.push(currentFocus);
@@ -120,9 +137,13 @@ function startMonitoring() {
     }
 
     // Update Game
-    const scene = game.scene.getScene('MainScene') as MainScene;
-    if (scene && scene.setFocusLevel) {
-        scene.setFocusLevel(currentFocus);
+    try {
+        const scene = game.scene.getScene('MainScene') as MainScene;
+        if (scene && scene.setFocusLevel) {
+            scene.setFocusLevel(currentFocus);
+        }
+    } catch (e) {
+        // Scene might not be ready yet
     }
 
   }, 1000);

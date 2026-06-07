@@ -77,14 +77,19 @@ export class FocusTracker {
         }
 
         // Pitch (Vertical) - Using nose Y relative to eye level and mouth
-        const eyeCenterY = (landmarks[159].y + landmarks[386].y) / 2; // Midpoint of top eyelids
-        const mouthY = landmarks[13].y; // Inner lip
-        const faceHeight = Math.abs(mouthY - eyeCenterY);
-        const nosePitch = (nose.y - eyeCenterY) / faceHeight;
+        const eyeTopL = landmarks[159];
+        const eyeTopR = landmarks[386];
+        const mouth = landmarks[13];
 
-        if (nosePitch < 0.3 || nosePitch > 0.7) {
-            const pitchPenalty = Math.abs(nosePitch - 0.5) * 100;
-            rawFocus -= pitchPenalty;
+        if (eyeTopL && eyeTopR && mouth) {
+            const eyeCenterY = (eyeTopL.y + eyeTopR.y) / 2; // Midpoint of top eyelids
+            const faceHeight = Math.abs(mouth.y - eyeCenterY);
+            const nosePitch = (nose.y - eyeCenterY) / faceHeight;
+
+            if (nosePitch < 0.3 || nosePitch > 0.7) {
+                const pitchPenalty = Math.abs(nosePitch - 0.5) * 100;
+                rawFocus -= pitchPenalty;
+            }
         }
 
       } else {
